@@ -21,10 +21,10 @@
         <div class="filter-toolbar">
             <div class="search-box"><span>⌕</span><input id="tableSearch" type="search"
                     placeholder="Search name, ID, household ID..."></div>
-            <select>
-                <option>All Barangays</option>
-                @foreach (range(1, 17) as $i)
-                    <option>Barangay {{ str_pad($i, 2, '0', STR_PAD_LEFT) }}</option>
+            <select id="barangayFilter">
+                <option value="">All Barangays</option>
+                @foreach ( $barangays as $barangay )
+                    <option value="{{ $barangay->name }}">{{ $barangay->name }}</option>
                 @endforeach
             </select>
             <select>

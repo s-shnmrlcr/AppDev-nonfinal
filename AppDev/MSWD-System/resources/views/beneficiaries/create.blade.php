@@ -40,9 +40,11 @@
                 <label class="full">Address
                     <textarea rows="2" placeholder="House / street / municipality"></textarea>
                 </label>
-                <label>Barangay<select required>
+                <label>Barangay<select name="barangay_id" required>
                         @foreach ($barangays as $barangay)
-                            <option>{{ $barangay }}</option>
+                            <option value="{{ $barangay->id }}">
+                                {{ $barangay->name }}
+                            </option>
                         @endforeach
                     </select></label>
                 <label>Sector<select>
