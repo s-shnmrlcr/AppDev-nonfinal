@@ -28,8 +28,6 @@
     @if (session('status'))
         <div class="alert alert-success" role="status">{{ session('status') }}</div>
     @endif
-    <p class="import-help">CSV columns: first_name, middle_name, last_name, suffix, date_of_birth, sex, civil_status, contact_number, address, barangay, sector, household_id, household_members, dependents, children, senior_citizens, pwd_members, occupation, source_of_income, monthly_income, employment_status. Required: first_name, last_name, date_of_birth, sex, barangay, sector.</p>
-
     <section class="card">
         <div class="filter-toolbar">
             <div class="search-box"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m16 16 5 5" /></svg><input id="tableSearch" type="search"

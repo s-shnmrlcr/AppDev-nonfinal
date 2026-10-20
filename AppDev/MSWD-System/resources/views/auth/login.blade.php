@@ -8,7 +8,8 @@
     <link rel="icon" type="image/png" href="{{ asset('images/branding/municipality-kabacan.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {{-- Bag-ong font para sa mas modern ug readable nga sign-in experience. -shaine --}}
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     @vite('resources/css/app.css')
 </head>
 
@@ -30,9 +31,10 @@
                 </div>
             </div>
             <div class="auth-message">
-                <div class="eyebrow">PAYOUT VERIFICATION PORTAL</div>
-                <h1>Verify assistance.<br>Release with confidence.</h1>
-                <p>A secure workspace for beneficiary verification, payout control, documentation, and auditability.</p>
+                {{-- Local nga welcome message aron mas duol ug memorable ang MSWDO branding. -shaine --}}
+                <div class="eyebrow">SERBISYO PARA SA KABACENO</div>
+                <h1>Serbisyong ramdam.<br>Tulong na maaasahan.</h1>
+                <p>Your secure workspace for beneficiary verification, assistance programs, and payout services in Kabacan.</p>
             </div>
             <div class="security-note">Authorized personnel only</div>
         </div>
@@ -53,9 +55,15 @@
                     <div class="auth-logo-tile auth-logo-wide"><img src="{{ asset('images/branding/dswd-bagong-pilipinas.png') }}" alt="DSWD and Bagong Pilipinas"></div>
                 </div>
             </div>
-            <div class="eyebrow">AUTHORIZED ACCESS</div>
-            <h2>Sign in to the portal</h2>
-            <p class="muted">Use your authorized organization email to continue.</p>
+            {{-- Klaro nga heading ug access context para sayon masabtan sa staff asa sila mo-login. -shaine --}}
+            <div class="auth-card-heading">
+                <span class="auth-access-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0 1 10 0v3" /><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M12 14v3" /></svg>
+                </span>
+                <div class="eyebrow">MSWDO KABACAN · SECURE ACCESS</div>
+                <h2>Sign in to the portal</h2>
+                <p class="muted">Use your authorized organization email to continue.</p>
+            </div>
 
             @if ($errors->any())
                 <div class="alert alert-danger">{{ $errors->first() }}</div>
@@ -84,7 +92,11 @@
                 <button class="button button-primary button-full">Sign in</button>
             </form>
 
-            <p class="muted">Need an account? <a href="{{ route('register') }}" class="text-link">Create account</a></p>
+            {{-- Bulag nga footer sa form aron dali makita ang registration ug security reminder. -shaine --}}
+            <div class="auth-card-footer">
+                <p class="muted">Need an account? <a href="{{ route('register') }}" class="text-link">Create account</a></p>
+                <span class="auth-footnote"><span aria-hidden="true">●</span> Authorized personnel only</span>
+            </div>
         </div>
     </main>
 

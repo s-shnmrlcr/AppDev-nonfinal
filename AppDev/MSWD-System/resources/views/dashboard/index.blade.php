@@ -26,7 +26,25 @@
                     </span>
                 </div>
                 <div class="stat-value">{{ $stat['value'] }}</div>
-                <div class="stat-caption">No records available</div>
+                <div class="stat-caption">
+                    {{-- Ibutang ang klaro nga kahulugan sa matag total aron dili parehas ang placeholder. -shaine --}}
+                    @switch($stat['label'])
+                        @case('Total Beneficiaries')
+                            Current registered total
+                            @break
+                        @case('Verified Beneficiaries')
+                            Records cleared for assistance
+                            @break
+                        @case('Pending Verification')
+                            Awaiting staff review
+                            @break
+                        @case('Payouts Released')
+                            Completed releases
+                            @break
+                        @default
+                            Current recorded total
+                    @endswitch
+                </div>
             </div>
         @endforeach
     </div>
