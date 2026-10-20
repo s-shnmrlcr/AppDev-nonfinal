@@ -27,13 +27,13 @@
                     <div class="auth-logo-tile"><img src="{{ asset('images/branding/dswd-logo.png') }}" alt="DSWD"></div>
                     <div class="auth-logo-tile"><img src="{{ asset('images/branding/municipality-kabacan.png') }}" alt="Municipality of Kabacan"></div>
                     <div class="auth-logo-tile"><img src="{{ asset('images/branding/cotabato-province-seal.png') }}" alt="Province of Cotabato"></div>
-                    <div class="auth-logo-tile auth-logo-wide"><img src="{{ asset('images/branding/dswd-bagong-pilipinas.png') }}" alt="DSWD and Bagong Pilipinas"></div>
+                    <div class="auth-logo-tile"><img src="{{ asset('images/branding/dswd-bagong-pilipinas.png') }}" alt="DSWD and Bagong Pilipinas"></div>
                 </div>
             </div>
             <div class="auth-message">
                 {{-- Local nga welcome message aron mas duol ug memorable ang MSWDO branding. -shaine --}}
-                <div class="eyebrow">SERBISYO PARA SA KABACENO</div>
-                <h1>Serbisyong ramdam.<br>Tulong na maaasahan.</h1>
+                <div class="eyebrow">SERBISYO PARA SA KABACEÑO</div>
+                <h1>Serbisyong Ramdam.<br>Tulong na Maaasahan.</h1>
                 <p>Your secure workspace for beneficiary verification, assistance programs, and payout services in Kabacan.</p>
             </div>
             <div class="security-note">Authorized personnel only</div>
@@ -52,7 +52,7 @@
                     <div class="auth-logo-tile"><img src="{{ asset('images/branding/dswd-logo.png') }}" alt="DSWD"></div>
                     <div class="auth-logo-tile"><img src="{{ asset('images/branding/municipality-kabacan.png') }}" alt="Municipality of Kabacan"></div>
                     <div class="auth-logo-tile"><img src="{{ asset('images/branding/cotabato-province-seal.png') }}" alt="Province of Cotabato"></div>
-                    <div class="auth-logo-tile auth-logo-wide"><img src="{{ asset('images/branding/dswd-bagong-pilipinas.png') }}" alt="DSWD and Bagong Pilipinas"></div>
+                    <div class="auth-logo-tile"><img src="{{ asset('images/branding/dswd-bagong-pilipinas.png') }}" alt="DSWD and Bagong Pilipinas"></div>
                 </div>
             </div>
             {{-- Klaro nga heading ug access context para sayon masabtan sa staff asa sila mo-login. -shaine --}}
@@ -61,7 +61,7 @@
                     <svg viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0 1 10 0v3" /><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M12 14v3" /></svg>
                 </span>
                 <div class="eyebrow">MSWDO KABACAN · SECURE ACCESS</div>
-                <h2>Sign in to the portal</h2>
+                <h2>Sign in to the Portal</h2>
                 <p class="muted">Use your authorized organization email to continue.</p>
             </div>
 
