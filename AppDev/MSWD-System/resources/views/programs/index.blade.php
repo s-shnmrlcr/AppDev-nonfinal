@@ -21,6 +21,17 @@
                 <div class="program-amount">{{ $program['amount'] }}</div>
                 <div class="program-meta"><span>Coverage<strong>{{ $program['coverage'] }}</strong></span><span>End
                     date<strong>{{ $program['end'] }}</strong></span></div>
+
+                    <div style="display:flex; gap:8px; margin-top:16px;">
+    <a href="{{ route('programs.edit', $program['db_id']) }}" class="button button-secondary">Edit</a>
+
+    <form action="{{ route('programs.destroy', $program['db_id']) }}" method="POST"
+          onsubmit="return confirm('Delete this program?');">
+        @csrf
+        @method('DELETE')
+        <button type="submit" class="button button-secondary">Delete</button>
+    </form>
+</div>
             </div>
         @endforeach
         @if (count($programs) === 0)

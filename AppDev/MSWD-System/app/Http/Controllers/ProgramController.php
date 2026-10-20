@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Program;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ProgramController extends Controller
 {
@@ -19,6 +20,7 @@ class ProgramController extends Controller
                 'coverage' => $program->coverage,
                 'status' => $program->status,
                 'end' => $program->end_date?->format('M j, Y') ?? 'No end date',
+                'db_id' => $program->id,
             ]);
 
         return view('programs.index', compact('programs'));
@@ -46,4 +48,32 @@ class ProgramController extends Controller
             ->route('programs.index')
             ->with('status', 'Payout program created.');
     }
+
+    public function edit(Program $program)
+{
+    return view('programs.edit', compact('program'));
+}
+
+public function update(Request $request, Program $program): RedirectResponse
+{
+    $validated = $request->validate([
+        'name' => ['required', 'string', 'max:255', Rule::unique('programs', 'name')->ignore($program->id)],
+        'type' => ['required', 'in:Financial Assistance,Emergency Aid,In-kind Assistance,Other'],
+        'amount' => ['required', 'numeric', 'min:0.01', 'max:9999999999.99'],
+        'coverage' => ['required', 'string', 'max:255'],
+        'end_date' => ['nullable', 'date'],
+        'status' => ['required', 'in:Draft,Active'],
+    ]);
+
+    $program->update($validated);
+
+    return redirect()->route('programs.index')->with('status', 'Program updated.');
+}
+
+public function destroy(Program $program): RedirectResponse
+{
+    $program->delete();
+
+    return redirect()->route('programs.index')->with('status', 'Program deleted.');
+}
 }
