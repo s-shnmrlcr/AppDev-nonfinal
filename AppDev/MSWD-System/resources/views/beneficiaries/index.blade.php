@@ -70,6 +70,7 @@
                         <th>Occupation</th>
                         <th>Verification</th>
                         <th>Payout</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -84,6 +85,17 @@
                             <td>{{ $b['occupation'] }}</td>
                             <td><x-status-badge :status="$b['verification']" /></td>
                             <td><x-status-badge :status="$b['payout']" /></td>
+                            <td style="text-align:right; white-space:nowrap;">
+    <a href="{{ route('beneficiaries.edit', $b['db_id']) }}" class="button button-secondary">Edit</a>
+
+    <form action="{{ route('beneficiaries.destroy', $b['db_id']) }}" method="POST"
+          style="display:inline;"
+          onsubmit="return confirm('Delete this beneficiary?');">
+        @csrf
+        @method('DELETE')
+        <button type="submit" class="button button-secondary">Delete</button>
+    </form>
+</td>
                         </tr>
                     @empty
                         <tr>

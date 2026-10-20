@@ -29,6 +29,7 @@ class BeneficiaryController extends Controller
                 'occupation' => $beneficiary->occupation,
                 'verification' => $beneficiary->verification_status,
                 'payout' => $beneficiary->payout_status,
+                'db_id' => $beneficiary->id,
             ]);
         // Gi add ko source ang values sa barangay table for search filter --shijme
         // Gi change ko ang source for barangays, sa database ko na gi connect ang values --shijme
@@ -247,4 +248,53 @@ class BeneficiaryController extends Controller
 
         return "'".$value;
     }
+
+
+    // Add the edit, update, and destroy methods for the BeneficiaryController
+   public function edit(Beneficiary $beneficiary)
+{
+    $barangays = \App\Models\Barangay::orderBy('name')->get();
+
+    return view('beneficiaries.edit', compact('beneficiary', 'barangays'));
+}
+
+public function update(Request $request, Beneficiary $beneficiary): RedirectResponse
+{
+    $validated = $request->validate($this->beneficiaryRules());
+    $document = $validated['id_document'] ?? null;
+    unset($validated['id_document']);
+
+    $oldPath = $beneficiary->id_document_path;
+
+    DB::transaction(function () use ($validated, $document, $beneficiary): void {
+        if ($document !== null) {
+            $path = $document->store('beneficiary-ids', 'local');
+            if ($path === false) {
+                throw new RuntimeException('The ID document could not be stored.');
+            }
+            $validated['id_document_path'] = $path;
+        }
+        $beneficiary->update($validated);
+    });
+
+    // Remove the old file only after the new one was saved.
+    if ($document !== null && $oldPath) {
+        \Illuminate\Support\Facades\Storage::disk('local')->delete($oldPath);
+    }
+
+    return redirect()
+        ->route('beneficiaries.index')
+        ->with('status', 'Beneficiary updated.');
+}
+
+  public function destroy(Beneficiary $beneficiary): RedirectResponse
+{
+    $beneficiary->delete();
+
+    return redirect()
+        ->route('beneficiaries.index')
+        ->with('status', 'Beneficiary deleted.');
+}
+
+
 }
