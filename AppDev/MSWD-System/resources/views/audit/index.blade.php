@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Audit Logs | DSWD Portal')
+@section('title', 'Audit Logs | MSWDO Kabacan')
 @section('page-title', 'Audit Logs')
 @section('breadcrumb', 'Audit Logs')
 

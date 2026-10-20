@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Add Beneficiary | DSWD Portal')
+@section('title', 'Add Beneficiary | MSWDO Kabacan')
 @section('page-title', 'Add Beneficiary')
 @section('breadcrumb', 'Beneficiaries / Add')
 

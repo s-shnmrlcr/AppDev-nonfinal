@@ -1,8 +1,8 @@
 <aside class="sidebar" id="sidebar">
     <div class="brand">
-        <div class="brand-mark">DSWD</div>
+        <img class="brand-logo" src="{{ asset('images/branding/municipality-kabacan.png') }}" alt="">
         <div>
-            <strong>DSWD Portal</strong>
+            <strong>MSWDO Kabacan</strong>
             <span>Payout Verification</span>
         </div>
     </div>

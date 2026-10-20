@@ -30,7 +30,14 @@ class ExampleTest extends TestCase
     {
         $this->get(route('login'))
             ->assertOk()
+            ->assertSee('<title>Sign In | MSWDO Kabacan</title>', false)
             ->assertSee('Sign in to the portal')
+            ->assertSee('MSWDO Kabacan')
+            ->assertSee('unlad-kabacan.jpg')
+            ->assertSee('dswd-logo.png')
+            ->assertSee('municipality-kabacan.png')
+            ->assertSee('cotabato-province-seal.png')
+            ->assertSee('dswd-bagong-pilipinas.png')
             ->assertSee(route('register'));
     }
 

@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account | DSWD Payout Verification System</title>
+    <title>Create Account | MSWDO Kabacan</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/branding/municipality-kabacan.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,10 +16,15 @@
     <div class="auth-visual">
         <div class="auth-overlay"></div>
         <div class="auth-copy">
-            <div class="brand-mark large">DSWD</div>
-            <div class="eyebrow">PAYOUT VERIFICATION PORTAL</div>
-            <h1>Verify assistance.<br>Release with confidence.</h1>
-            <p>Create an authorized staff account to access beneficiary verification, payout control, and reporting.</p>
+            <div class="auth-site-lockup">
+                <img src="{{ asset('images/branding/municipality-kabacan.png') }}" alt="">
+                <span><strong>MSWDO Kabacan</strong><small>Municipal Social Welfare and Development Office</small></span>
+            </div>
+            <div class="auth-message">
+                <div class="eyebrow">PAYOUT VERIFICATION PORTAL</div>
+                <h1>Verify assistance.<br>Release with confidence.</h1>
+                <p>Create an authorized staff account to access beneficiary verification, payout control, and reporting.</p>
+            </div>
             <div class="security-note">Authorized personnel only</div>
         </div>
     </div>
@@ -26,7 +32,10 @@
     <main class="auth-panel">
         <div class="auth-card">
             <div class="mobile-brand">
-                <div class="brand-mark">DSWD</div>
+                <div class="auth-site-lockup">
+                    <img src="{{ asset('images/branding/municipality-kabacan.png') }}" alt="">
+                    <span><strong>MSWDO Kabacan</strong><small>Municipal Social Welfare and Development Office</small></span>
+                </div>
             </div>
             <div class="eyebrow">AUTHORIZED ACCESS</div>
             <h2>Create your account</h2>

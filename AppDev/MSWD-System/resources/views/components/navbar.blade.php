@@ -5,7 +5,7 @@
         </button>
         <div>
             <div class="topbar-title">@yield('page-title', 'Dashboard')</div>
-            <div class="breadcrumb">DSWD Portal / @yield('breadcrumb', 'Dashboard')</div>
+            <div class="breadcrumb">MSWDO Kabacan / @yield('breadcrumb', 'Dashboard')</div>
         </div>
     </div>
 

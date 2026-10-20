@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Claimant Identity Check | DSWD Portal')
+@section('title', 'Claimant Identity Check | MSWDO Kabacan')
 @section('page-title', 'Claimant Identity Check')
 @section('breadcrumb', 'Verification Center')
 

@@ -89,6 +89,14 @@
     border-radius: 14px;
     font-size: 12px;
   }
+  .brand-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: 50%;
+    background: #fff;
+    flex: 0 0 auto;
+  }
   .sidebar-section-label {
     font-size: 10px;
     letter-spacing: 1.2px;
@@ -1141,11 +1149,76 @@
     z-index: 1;
     left: 11%;
     right: 12%;
-    top: 25%;
+    top: 0;
+    height: 100%;
+    padding: 6% 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .auth-branding {
+    display: grid;
+    gap: 18px;
+  }
+  .auth-site-lockup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .auth-site-lockup img {
+    width: 54px;
+    height: 54px;
+    object-fit: contain;
+    border-radius: 50%;
+    background: #fff;
+    padding: 3px;
+    flex: 0 0 auto;
+  }
+  .auth-site-lockup strong,
+  .auth-site-lockup small {
+    display: block;
+  }
+  .auth-site-lockup strong {
+    color: #fff;
+    font-size: 19px;
+    letter-spacing: -0.35px;
+  }
+  .auth-site-lockup small {
+    color: #c1d1dd;
+    font-size: 10px;
+    margin-top: 4px;
+  }
+  .auth-logo-grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .auth-logo-tile {
+    width: 64px;
+    height: 62px;
+    display: grid;
+    place-items: center;
+    padding: 6px;
+    background: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 8px;
+  }
+  .auth-logo-tile.auth-logo-wide {
+    width: 118px;
+  }
+  .auth-logo-tile img {
+    display: block;
+    max-width: 100%;
+    max-height: 48px;
+    object-fit: contain;
+  }
+  .auth-message {
+    margin: auto 0;
   }
   .auth-copy .eyebrow {
     color: #a7bfd1;
-    margin-top: 30px;
+    margin-top: 0;
   }
   .auth-copy h1 {
     font-size: 44px;
@@ -1301,8 +1374,28 @@
       display: none;
     }
     .mobile-brand {
-      display: block;
+      display: grid;
+      gap: 16px;
       margin-bottom: 25px;
+    }
+    .auth-site-lockup strong {
+      color: var(--navy);
+    }
+    .auth-site-lockup small {
+      color: var(--muted);
+    }
+    .auth-logo-grid {
+      gap: 6px;
+    }
+    .auth-logo-tile {
+      width: 56px;
+      height: 54px;
+    }
+    .auth-logo-tile.auth-logo-wide {
+      width: 102px;
+    }
+    .auth-logo-tile img {
+      max-height: 40px;
     }
   }
   @media (max-width: 650px) {
