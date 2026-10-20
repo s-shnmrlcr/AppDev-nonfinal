@@ -2,15 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\DemoBeneficiaries;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class VerificationController extends Controller
 {
-    public function index(?string $beneficiary = null)
+    public function index()
     {
-        $beneficiary = DemoBeneficiaries::find($beneficiary ?? 'BEN-00001');
-        abort_if($beneficiary === null, 404);
+        return view('verification.index');
+    }
 
-        return view('verification.index', compact('beneficiary'));
+    public function review(Request $request): RedirectResponse
+    {
+        // Duha ra ka desisyon ang dawaton kay audit record kini sa manual nga visual review. -shaine
+        $validated = $request->validate([
+            'decision' => ['required', 'in:matched,not_matched'],
+        ]);
+
+        DB::table('identity_verification_logs')->insert([
+            'user_id' => $request->user()->id,
+            'decision' => $validated['decision'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return redirect()
+            ->route('verification.index')
+            ->with('status', 'Identity review recorded in the audit log.');
     }
 }

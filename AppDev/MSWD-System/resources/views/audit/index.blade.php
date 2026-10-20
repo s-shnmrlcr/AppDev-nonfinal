@@ -12,44 +12,34 @@
         </div>
     </div>
     <section class="card">
-        <div class="filter-toolbar">
-            <div class="search-box"><span>⌕</span><input type="search" placeholder="Search user, action, beneficiary...">
-            </div><select>
-                <option>All modules</option>
-                <option>Beneficiaries</option>
-                <option>Verification</option>
-                <option>Payouts</option>
-            </select><select>
-                <option>All statuses</option>
-                <option>Success</option>
-                <option>Failed</option>
-            </select>
-        </div>
         <div class="table-scroll">
             <table class="data-table">
                 <thead>
                     <tr>
                         <th>Date / Time</th>
-                        <th>User</th>
-                        <th>Role</th>
-                        <th>Action</th>
-                        <th>Module</th>
-                        <th>Target</th>
-                        <th>Status</th>
+                        <th>Reviewed By</th>
+                        <th>Account</th>
+                        <th>Decision</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($logs as $log)
+                    @forelse ($logs as $log)
                         <tr>
-                            <td>{{ $log['time'] }}</td>
-                            <td><strong>{{ $log['user'] }}</strong></td>
-                            <td>{{ $log['role'] }}</td>
-                            <td>{{ $log['action'] }}</td>
-                            <td>{{ $log['module'] }}</td>
-                            <td class="mono">{{ $log['target'] }}</td>
-                            <td><x-status-badge :status="$log['status']" /></td>
+                            <td>{{ \Illuminate\Support\Carbon::parse($log->created_at)->format('M j, Y g:i A') }}</td>
+                            <td><strong>{{ $log->name }}</strong></td>
+                            <td>{{ $log->email }}</td>
+                            <td><x-status-badge :status="$log->decision === 'matched' ? 'Identity matches' : 'Identity does not match'" /></td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state table-empty-state">
+                                    <strong>No identity reviews recorded</strong>
+                                    <p>Recorded claimant identity decisions will appear here.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

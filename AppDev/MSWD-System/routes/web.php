@@ -20,19 +20,24 @@ Route::get('/register', [AuthController::class, 'showRegistration'])->name('regi
 Route::post('/register', [AuthController::class, 'register'])->name('register.store');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::middleware('demo.auth')->group(function () {
+Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/beneficiaries', [BeneficiaryController::class, 'index'])->name('beneficiaries.index');
     Route::get('/beneficiaries/create', [BeneficiaryController::class, 'create'])->name('beneficiaries.create');
-    Route::get('/beneficiaries/{beneficiary}', [BeneficiaryController::class, 'show'])->name('beneficiaries.show');
+    Route::post('/beneficiaries', [BeneficiaryController::class, 'store'])->name('beneficiaries.store');
+    Route::post('/beneficiaries/import', [BeneficiaryController::class, 'import'])->name('beneficiaries.import');
+    Route::get('/beneficiaries/export', [BeneficiaryController::class, 'export'])->name('beneficiaries.export');
 
-    Route::get('/verification/{beneficiary?}', [VerificationController::class, 'index'])->name('verification.index');
+    Route::get('/verification', [VerificationController::class, 'index'])->name('verification.index');
+    Route::post('/verification/review', [VerificationController::class, 'review'])->name('verification.review');
 
     Route::get('/programs', [ProgramController::class, 'index'])->name('programs.index');
+    Route::get('/programs/create', [ProgramController::class, 'create'])->name('programs.create');
+    Route::post('/programs', [ProgramController::class, 'store'])->name('programs.store');
 
     Route::get('/payouts', [PayoutController::class, 'index'])->name('payouts.index');
-    Route::get('/payouts/{payout}', [PayoutController::class, 'show'])->name('payouts.show');
+    Route::get('/payouts/export', [PayoutController::class, 'export'])->name('payouts.export');
 
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/audit-logs', [AuditController::class, 'index'])->name('audit-logs.index');

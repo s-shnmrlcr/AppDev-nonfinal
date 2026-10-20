@@ -3,6 +3,10 @@
 @php
     $normalized = strtolower($status);
     $class = match (true) {
+        str_contains($normalized, 'does not match')
+            => 'status-danger',
+        str_contains($normalized, 'matches')
+            => 'status-success',
         str_contains($normalized, 'verified'),
         str_contains($normalized, 'released'),
         str_contains($normalized, 'active'),

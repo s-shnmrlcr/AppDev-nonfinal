@@ -38,12 +38,12 @@ class AuthController extends Controller
             ]);
         }
 
-        $user = User::create($validated);
-        Auth::login($user);
-        $request->session()->regenerate();
-        $this->storeDemoUser($user);
+        // Human nga mag-sign in ang bag-ong user; ayaw dayon siya i-authenticate human sa registration. -shaine
+        User::create($validated);
 
-        return redirect()->route('dashboard');
+        return redirect()
+            ->route('login')
+            ->with('status', 'Your account has been created. Sign in to continue.');
     }
 
     public function login(Request $request): RedirectResponse
@@ -59,7 +59,7 @@ class AuthController extends Controller
 
         if (! $this->hasAuthorizedEmailDomain($credentials['email'])) {
             throw ValidationException::withMessages([
-                'email' => 'Only authorized DSWD personnel can access this prototype.',
+                'email' => 'Only authorized DSWD personnel can access this portal.',
             ]);
         }
 
@@ -68,9 +68,9 @@ class AuthController extends Controller
                 'email' => 'These credentials do not match an account.',
             ]);
         }
-
+        // Ilisi ang session ID human sa login aron malikayan ang session fixation. -shaine
         $request->session()->regenerate();
-        $this->storeDemoUser(Auth::user());
+        $request->session()->regenerate();
 
         return redirect()->route('dashboard');
     }
@@ -88,17 +88,8 @@ class AuthController extends Controller
     {
         $domain = strtolower(config('mswd.authorized_email_domain', '@dswd.gov.ph'));
 
+        // Suffix ang i-check aron parehas ang resulta bisag uppercase ang domain sa input. -shaine
         return str_ends_with(strtolower($email), $domain);
     }
 
-    private function storeDemoUser(User $user): void
-    {
-        session([
-            'demo_user' => [
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => 'Authorized Personnel / Staff',
-            ],
-        ]);
-    }
 }

@@ -39,23 +39,20 @@
             <form method="POST" action="{{ route('register.store') }}" class="form-stack">
                 @csrf
                 <label>Full name
-                    <input type="text" name="name" value="{{ old('name') }}" autocomplete="name"
-                        placeholder="Your full name" required>
+                    <input type="text" name="name" value="{{ old('name') }}" autocomplete="name" required>
                 </label>
 
                 <label>Email address
-                    <input type="email" name="email" value="{{ old('email') }}" autocomplete="email"
-                        placeholder="name@dswd.gov.ph" required>
+                    <input type="email" name="email" value="{{ old('email') }}" autocomplete="email" required>
                 </label>
 
                 <label>Password
-                    <input type="password" name="password" autocomplete="new-password"
-                        placeholder="At least 8 characters" minlength="8" required>
+                    <input type="password" name="password" autocomplete="new-password" minlength="8" required>
                 </label>
 
                 <label>Confirm password
-                    <input type="password" name="password_confirmation" autocomplete="new-password"
-                        placeholder="Re-enter your password" minlength="8" required>
+                    <input type="password" name="password_confirmation" autocomplete="new-password" minlength="8"
+                        required>
                 </label>
 
                 <button class="button button-primary button-full">Create account</button>

@@ -18,7 +18,7 @@
             <div class="brand-mark large">DSWD</div>
             <div class="eyebrow">PAYOUT VERIFICATION PORTAL</div>
             <h1>Verify assistance.<br>Release with confidence.</h1>
-            <p>A centralized prototype for beneficiary verification, payout control, documentation, and auditability.
+            <p>A secure workspace for beneficiary verification, payout control, documentation, and auditability.
             </p>
             <div class="security-note">Authorized personnel only</div>
         </div>
@@ -36,25 +36,25 @@
             @if ($errors->any())
                 <div class="alert alert-danger">{{ $errors->first() }}</div>
             @endif
+            @if (session('status'))
+                <div class="alert alert-success" role="status">{{ session('status') }}</div>
+            @endif
 
             <form method="POST" action="{{ route('login.submit') }}" class="form-stack">
                 @csrf
                 <label>Email address
-                    <input type="email" name="email" value="{{ old('email') }}" placeholder="name@dswd.gov.ph"
-                        required>
+                    <input type="email" name="email" value="{{ old('email') }}" autocomplete="email" required>
                 </label>
 
                 <label>Password
                     <div class="password-field">
-                        <input type="password" name="password" id="password" placeholder="Enter your password"
-                            required>
+                        <input type="password" name="password" id="password" autocomplete="current-password" required>
                         <button type="button" id="togglePassword">Show</button>
                     </div>
                 </label>
 
-                <div class="form-row between">
+                <div class="between">
                     <label class="checkbox-label"><input type="checkbox" name="remember"> Remember me</label>
-                    <a href="#" class="text-link">Forgot password?</a>
                 </div>
 
                 <button class="button button-primary button-full">Sign in</button>

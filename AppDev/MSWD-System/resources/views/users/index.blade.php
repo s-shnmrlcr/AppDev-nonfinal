@@ -9,7 +9,7 @@
             <div class="eyebrow">ACCESS CONTROL</div>
             <h1>User Management</h1>
             <p>Manage authorized personnel and role-based permissions.</p>
-        </div><button class="button button-primary">+ Create User</button>
+        </div>
     </div>
     <div class="card">
         <div class="table-scroll">
@@ -24,15 +24,24 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($users as $user)
+                    @forelse ($users as $user)
                         <tr>
-                            <td><strong>{{ $user['name'] }}</strong></td>
-                            <td>{{ $user['email'] }}</td>
-                            <td>{{ $user['role'] }}</td>
-                            <td><x-status-badge :status="$user['status']" /></td>
-                            <td><button class="table-action">Manage</button></td>
+                            <td><strong>{{ $user->name }}</strong></td>
+                            <td>{{ $user->email }}</td>
+                            <td>Authorized staff</td>
+                            <td><x-status-badge status="Active" /></td>
+                            <td><span class="muted">—</span></td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state table-empty-state">
+                                    <strong>No user accounts</strong>
+                                    <p>Registered accounts will appear here.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
