@@ -85,7 +85,7 @@
                             <td>{{ $b['occupation'] }}</td>
                             <td><x-status-badge :status="$b['verification']" /></td>
                             <td><x-status-badge :status="$b['payout']" /></td>
-                            <td style= white-space:nowrap;">
+                            <td style="text-align:right; white-space:nowrap;">
     <a href="{{ route('beneficiaries.edit', $b['db_id']) }}" class="button button-secondary">Edit</a>
 
     <form action="{{ route('beneficiaries.destroy', $b['db_id']) }}" method="POST"
