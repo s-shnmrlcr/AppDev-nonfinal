@@ -29,11 +29,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/beneficiaries/import', [BeneficiaryController::class, 'import'])->name('beneficiaries.import');
     Route::get('/beneficiaries/export', [BeneficiaryController::class, 'export'])->name('beneficiaries.export');
 
-    // Route for editing, updating, and deleting beneficiaries 
-    Route::get('/beneficiaries/{beneficiary}/edit', [BeneficiaryController::class, 'edit'])->name('beneficiaries.edit');
-    Route::put('/beneficiaries/{beneficiary}', [BeneficiaryController::class, 'update'])->name('beneficiaries.update');
-    Route::delete('/beneficiaries/{beneficiary}', [BeneficiaryController::class, 'destroy'])->name('beneficiaries.destroy');
-
     Route::get('/verification', [VerificationController::class, 'index'])->name('verification.index');
     Route::post('/verification/review', [VerificationController::class, 'review'])->name('verification.review');
 
