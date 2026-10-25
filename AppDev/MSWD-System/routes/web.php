@@ -41,12 +41,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/programs/create', [ProgramController::class, 'create'])->name('programs.create');
     Route::post('/programs', [ProgramController::class, 'store'])->name('programs.store');
 
-    // Routes for editing, updating, and deleting programs
-    Route::get('/programs/{program}/edit', [ProgramController::class, 'edit'])->name('programs.edit');
-    Route::put('/programs/{program}', [ProgramController::class, 'update'])->name('programs.update');
-    Route::delete('/programs/{program}', [ProgramController::class, 'destroy'])->name('programs.destroy');
-
-
     Route::get('/payouts', [PayoutController::class, 'index'])->name('payouts.index');
     Route::get('/payouts/export', [PayoutController::class, 'export'])->name('payouts.export');
 
