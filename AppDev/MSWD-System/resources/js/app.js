@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     overlay?.addEventListener('click', closeMenu);
 
     window.addEventListener('resize', () => {
+        // Sirad-i ang mobile navigation kon mobalik sa desktop layout. -shaine
         if (window.innerWidth > 900) closeMenu();
     });
 });

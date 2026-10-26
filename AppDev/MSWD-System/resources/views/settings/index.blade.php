@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Settings | DSWD Portal')
+@section('title', 'Settings | MSWDO Kabacan')
 @section('page-title', 'Settings')
 @section('breadcrumb', 'Settings')
 
@@ -8,7 +8,7 @@
         <div>
             <div class="eyebrow">SYSTEM CONFIGURATION</div>
             <h1>Settings</h1>
-            <p>Configure prototype rules and organization settings.</p>
+            <p>Review organization settings and payout rules.</p>
         </div>
     </div>
     <div class="settings-layout">
@@ -17,15 +17,14 @@
                 <h3>System Settings</h3>
                 <p>General portal configuration.</p>
             </div>
-            <div class="form-stack"><label>System name<input value="{{ $settings['system_name'] }}"></label><label>Authorized
-                    email domain<input value="{{ $settings['email_domain'] }}"><small>Keep this configurable until the
-                        official domain requirement is confirmed.</small></label><label>Barangays<input
+            <div class="form-stack"><label>System name<input value="{{ $settings['system_name'] }}" readonly></label><label>Authorized
+                    email domain<input value="{{ $settings['email_domain'] }}" readonly><small>Contact an administrator to update organization settings.</small></label><label>Barangays<input
                         value="{{ $settings['barangays'] }}" disabled></label></div>
         </section>
         <section class="card form-section">
             <div class="section-heading">
                 <h3>Payout Rules</h3>
-                <p>Mandatory prototype business rules.</p>
+                <p>Required controls before a payout can be released.</p>
             </div>
             <div class="settings-list"><label><input type="checkbox" checked disabled> One assistance per
                     beneficiary</label><label><input type="checkbox" checked disabled> One barangay per

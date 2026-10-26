@@ -34,6 +34,7 @@ class BarangaySeeder extends Seeder
         ];
 
         foreach ($barangays as $name) {
+            // Update-or-insert aron dili modoble ang barangay kung balik-balikon ang seeding. -shaine
             DB::table('barangays')->updateOrInsert(
                 ['name' => $name],
                 ['name' => $name]
