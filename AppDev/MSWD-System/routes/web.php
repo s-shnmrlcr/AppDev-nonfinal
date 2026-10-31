@@ -29,6 +29,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/beneficiaries', [BeneficiaryController::class, 'store'])->name('beneficiaries.store');
     Route::post('/beneficiaries/import', [BeneficiaryController::class, 'import'])->name('beneficiaries.import');
     Route::get('/beneficiaries/export', [BeneficiaryController::class, 'export'])->name('beneficiaries.export');
+    // EN: Keep beneficiary details and ID documents behind authentication; TL: Nasa ilalim ng authentication ang detalye at ID; Bisaya: Kinahanglan naka-login aron ma-access ang detalye ug ID. -shaine
+    Route::get('/beneficiaries/{beneficiary}', [BeneficiaryController::class, 'show'])->name('beneficiaries.show');
+    Route::get('/beneficiaries/{beneficiary}/document', [BeneficiaryController::class, 'document'])->name('beneficiaries.document');
+    // EN: Status updates use PATCH to change only the verification state; TL: PATCH ang gamit para status lang ang baguhin; Bisaya: PATCH ang gamiton aron verification status ra ang mausab. -shaine
+    Route::patch('/beneficiaries/{beneficiary}/verification', [BeneficiaryController::class, 'updateVerification'])
+        ->name('beneficiaries.update-verification');
 
     Route::get('/verification', [VerificationController::class, 'index'])->name('verification.index');
     Route::post('/verification/review', [VerificationController::class, 'review'])->name('verification.review');

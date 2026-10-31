@@ -7,6 +7,7 @@ use App\Models\FamilyHead;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -22,6 +23,8 @@ class BeneficiaryController extends Controller
             ->get()
             ->map(fn (Beneficiary $beneficiary) => [
                 'id' => 'BEN-'.str_pad((string) $beneficiary->id, 6, '0', STR_PAD_LEFT),
+                // EN: Keep the database ID for the action link; TL: Gamitin ang database ID sa action link; Bisaya: Gamita ang database ID sa action link. -shaine
+                'record_id' => $beneficiary->id,
                 'name' => $beneficiary->full_name,
                 'age' => $beneficiary->date_of_birth->age,
                 'sex' => $beneficiary->sex,
@@ -38,6 +41,62 @@ class BeneficiaryController extends Controller
         $barangays = DB::table('barangays')->orderBy('name')->get(['id', 'name']);
 
         return view('beneficiaries.index', compact('beneficiaries', 'barangays'));
+    }
+
+    public function show(Beneficiary $beneficiary)
+    {
+        // EN: Load related records for the complete review page; TL: I-load ang kaugnay na records para sa buong detalye; Bisaya: I-load ang mga kauban nga record para kompleto ang detalye. -shaine
+        $beneficiary->load(['barangay', 'familyHead']);
+        $hasIdDocument = $this->hasAvailableIdDocument($beneficiary);
+
+        return view('beneficiaries.show', compact('beneficiary', 'hasIdDocument'));
+    }
+
+    public function document(Beneficiary $beneficiary)
+    {
+        // EN: Only serve an existing ID in the beneficiary ID folder; TL: Ihatid lang ang ID na nasa tamang folder at umiiral; Bisaya: Ipakita lang ang ID nga anaa sa hustong folder ug anaa gyud. -shaine
+        abort_unless($this->hasAvailableIdDocument($beneficiary), 404);
+
+        // EN: Use Laravel's file response because the filesystem contract does not expose adapter response(); TL: Gamitin ang file response dahil walang response() sa filesystem contract; Bisaya: Gamita ang file response kay wala sa filesystem contract ang response(). -shaine
+        return response()->file(Storage::disk('local')->path($beneficiary->id_document_path));
+    }
+
+    public function updateVerification(Request $request, Beneficiary $beneficiary): RedirectResponse
+    {
+        // EN: Accept only Verified and require an explicit document-check acknowledgment; TL: Verified lang ang payagan at kailangan ang kumpirmasyon ng dokumento; Bisaya: Verified ra ang dawaton ug kinahanglan kumpirmahon nga nasusi ang dokumento. -shaine
+        $validated = $request->validate([
+            'verification_status' => ['required', 'in:Verified'],
+            'documents_checked' => ['required', 'accepted'],
+        ]);
+
+        // EN: Prevent changes unless the beneficiary is still Pending; TL: Pigilan ang pagbabago kung hindi na Pending; Bisaya: Ayaw tugoti ang kausaban kon dili na Pending. -shaine
+        abort_unless($beneficiary->verification_status === 'Pending', 409);
+
+        // EN: Do not verify without an available ID document; TL: Huwag i-verify kung walang available na ID; Bisaya: Ayaw i-verify kon walay magamit nga ID. -shaine
+        if (! $this->hasAvailableIdDocument($beneficiary)) {
+            throw ValidationException::withMessages([
+                'documents_checked' => 'The beneficiary ID document must be uploaded and available before verification.',
+            ]);
+        }
+
+        // EN: Update only the verification field to preserve all other beneficiary data; TL: Status lang ang baguhin para mapanatili ang ibang impormasyon; Bisaya: Status ra ang usbon aron magpabilin ang ubang detalye. -shaine
+        $beneficiary->update([
+            'verification_status' => $validated['verification_status'],
+        ]);
+
+        return redirect()
+            ->route('beneficiaries.show', $beneficiary)
+            ->with('status', 'Beneficiary verification status updated to Verified.');
+    }
+
+    private function hasAvailableIdDocument(Beneficiary $beneficiary): bool
+    {
+        $path = $beneficiary->id_document_path;
+
+        // EN: Restrict document access to the expected storage folder; TL: Limitahan ang access sa tamang storage folder; Bisaya: Limitahi ang access sa hustong storage folder. -shaine
+        return is_string($path)
+            && dirname($path) === 'beneficiary-ids'
+            && Storage::disk('local')->exists($path);
     }
 
     public function create()

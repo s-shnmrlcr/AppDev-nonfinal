@@ -69,6 +69,8 @@
                         <th>Sector</th>
                         <th>Occupation</th>
                         <th>Verification</th>
+                        {{-- EN: Open the selected record without creating a duplicate; TL: Buksan ang napiling record nang walang duplicate; Bisaya: Ablihi ang napiling record nga walay madugang nga duplicate. -shaine --}}
+                        <th>Action</th>
                         {{-- <th>Payout</th> gi remove ko na ni sa beneficiary summary  -shijme--}}
                     </tr>
                 </thead>
@@ -83,11 +85,13 @@
                             <td>{{ $b['sector'] }}</td>
                             <td>{{ $b['occupation'] ?? '—' }}</td>
                             <td><x-status-badge :status="$b['verification']" /></td>
+                            {{-- EN: Link to the full details and authorized verification action; TL: Link ito sa buong detalye at verification action; Bisaya: Link kini sa kompleto nga detalye ug verification action. -shaine --}}
+                            <td><a href="{{ route('beneficiaries.show', $b['record_id']) }}" class="button button-secondary">View/Action</a></td>
                             {{-- <td><x-status-badge :status="$b['payout']" /></td> gi remove ko na ni sa beneficiary -shijme --}}
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9">
+                            <td colspan="10">
                                 <div class="empty-state table-empty-state">
                                     <strong>No beneficiaries yet</strong>
                                     <p>Registered beneficiary records will appear here.</p>
