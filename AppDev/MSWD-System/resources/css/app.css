@@ -2783,6 +2783,21 @@
     margin-top: 22px;
   }
 
+  /* Parehas ang alignment sa Sector ug Is Family Head; pantayin ang Sector at Is Family Head; align Sector and Is Family Head. */
+  .app-shell .sector-field,
+  .app-shell .family-head-field {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+  }
+
+  /* Gamayng dugang nga luna sa "Specify Sector"; dagdag na pagitan bago ang "Specify Sector"; add a little space before "Specify Sector". */
+  .app-shell .sector-field .conditional-field:not([hidden]) {
+    display: grid;
+    gap: 8px;
+    margin-top: 5px;
+  }
+
   .app-shell .form-grid label,
   .app-shell .form-stack label,
   .app-shell .identity-review-form > label {

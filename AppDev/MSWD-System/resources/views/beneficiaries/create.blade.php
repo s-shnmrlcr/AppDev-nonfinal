@@ -192,7 +192,7 @@
 
             <div class="form-grid">
                 {{-- SECTOR --}}
-                <div class="form-field">
+                <div class="form-field sector-field">
                     <label for="sector">Sector</label>
 
                     <select name="sector" id="sector" required>
@@ -245,7 +245,7 @@
                 </div>
 
                 {{-- FAMILY HEAD --}}
-                <div class="form-field">
+                <div class="form-field family-head-field">
                     <label for="is_familyhead">Is Family Head?</label>
 
                     <select name="is_familyhead"
