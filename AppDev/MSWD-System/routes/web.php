@@ -10,6 +10,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VerificationController;
+use App\Http\Controllers\PayoutReleaseController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('login'));
@@ -38,6 +39,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/payouts', [PayoutController::class, 'index'])->name('payouts.index');
     Route::get('/payouts/export', [PayoutController::class, 'export'])->name('payouts.export');
+
+    Route::get('/payouts/{payout}/releases', [PayoutReleaseController::class, 'index'])->name('payout-releases.index');
+    Route::post('/payouts/{payout}/releases', [PayoutReleaseController::class, 'store'])->name('payout-releases.store');
+    Route::patch('/payout-releases/{release}/status', [PayoutReleaseController::class, 'updateStatus'])->name('payout-releases.update-status');
 
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/audit-logs', [AuditController::class, 'index'])->name('audit-logs.index');

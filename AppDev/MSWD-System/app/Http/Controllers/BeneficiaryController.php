@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Beneficiary;
+use App\Models\FamilyHead;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,7 @@ class BeneficiaryController extends Controller
     public function index()
     {
         $beneficiaries = Beneficiary::query()
-            ->with('barangay')
+            ->with(['barangay', 'familyHead'])
             ->orderBy('last_name')
             ->get()
             ->map(fn (Beneficiary $beneficiary) => [
@@ -24,11 +25,13 @@ class BeneficiaryController extends Controller
                 'name' => $beneficiary->full_name,
                 'age' => $beneficiary->date_of_birth->age,
                 'sex' => $beneficiary->sex,
+                'purok' => $beneficiary->purok,
                 'barangay' => $beneficiary->barangay->name,
                 'sector' => $beneficiary->sector,
-                'occupation' => $beneficiary->occupation,
+                'occupation' => $beneficiary->familyHead?->occupation ?? '—',
                 'verification' => $beneficiary->verification_status,
-                'payout' => $beneficiary->payout_status,
+
+                // 'payout' => $beneficiary->payout_status, gi move ko ni sa payouts table --shijme
             ]);
         // Gi add ko source ang values sa barangay table for search filter --shijme
         // Gi change ko ang source for barangays, sa database ko na gi connect ang values --shijme
@@ -47,23 +50,60 @@ class BeneficiaryController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate($this->beneficiaryRules());
+
         $document = $validated['id_document'] ?? null;
         unset($validated['id_document']);
 
-        DB::transaction(function () use ($validated, $document): void {
+        // Separate family-head fields from beneficiary fields.
+        $familyHeadFields = [
+            'household_members',
+            'dependents',
+            'children',
+            'senior_citizens',
+            'pwd_members',
+            'occupation',
+            'source_of_income',
+            'monthly_estimated_income',
+            'employment_status',
+        ];
+
+        $familyHeadData = array_intersect_key(
+            $validated,
+            array_flip($familyHeadFields)
+        );
+
+        $beneficiaryData = array_diff_key(
+            $validated,
+            array_flip($familyHeadFields)
+        );
+
+        DB::transaction(function () use (
+            &$beneficiaryData,
+            $familyHeadData,
+            $document
+        ): void {
             if ($document !== null) {
                 $path = $document->store('beneficiary-ids', 'local');
+
                 if ($path === false) {
-                    throw new RuntimeException('The ID document could not be stored.');
+                    throw new RuntimeException(
+                        'The ID document could not be stored.'
+                    );
                 }
-                $validated['id_document_path'] = $path;
+
+                $beneficiaryData['id_document_path'] = $path;
             }
-            Beneficiary::create($validated);
+
+            $beneficiary = Beneficiary::create($beneficiaryData);
+
+            if ($beneficiary->is_familyhead) {
+                $beneficiary->familyHead()->create($familyHeadData);
+            }
         });
 
         return redirect()
             ->route('beneficiaries.index')
-            ->with('status', 'Beneficiary registered.');
+            ->with('status', 'Beneficiary registered successfully.');
     }
 
     public function import(Request $request): RedirectResponse
@@ -95,10 +135,18 @@ class BeneficiaryController extends Controller
 
         $barangays = DB::table('barangays')->pluck('id', 'name')->all();
         $allowedHeaders = [
-            'first_name', 'middle_name', 'last_name', 'suffix', 'date_of_birth', 'sex',
-            'civil_status', 'contact_number', 'address', 'barangay', 'sector', 'household_id',
-            'household_members', 'dependents', 'children', 'senior_citizens', 'pwd_members',
-            'occupation', 'source_of_income', 'monthly_income', 'employment_status',
+            'first_name',
+            'middle_name',
+            'last_name',
+            'suffix',
+            'date_of_birth',
+            'sex',
+            'civil_status',
+            'contact_number',
+            'purok',
+            'barangay',
+            'sector',
+            'is_familyhead',
         ];
         $rows = [];
         $errors = [];
@@ -123,6 +171,14 @@ class BeneficiaryController extends Controller
             );
             $row['barangay_id'] = $barangays[$row['barangay'] ?? ''] ?? null;
             unset($row['barangay']);
+
+            if (
+                isset($row['is_familyhead'])
+                && filter_var($row['is_familyhead'], FILTER_VALIDATE_BOOLEAN)
+            ) {
+                $errors[] = "Line {$line}: Family heads must be registered through the Add Beneficiary form.";
+                continue;
+            }
 
             $validator = Validator::make($row, $this->beneficiaryRules(false));
             if ($validator->fails()) {
@@ -163,6 +219,10 @@ class BeneficiaryController extends Controller
 
         return response()->streamDownload(function () use ($beneficiaries): void {
             $output = fopen('php://output', 'w');
+
+            if ($output === false) {
+                throw new RuntimeException('The CSV output stream could not be opened.');
+            }
             fputcsv($output, $this->csvHeaders(), escape: '');
 
             // I-preload ang barangay relation sa query sa taas aron malikayan ang query kada beneficiary. -shaine
@@ -176,19 +236,10 @@ class BeneficiaryController extends Controller
                     $beneficiary->sex,
                     $beneficiary->civil_status,
                     $beneficiary->contact_number,
-                    $beneficiary->address,
-                    $beneficiary->barangay->name,
+                    $beneficiary->purok,
+                    $beneficiary->barangay?->name,
                     $beneficiary->sector,
-                    $beneficiary->household_id,
-                    $beneficiary->household_members,
-                    $beneficiary->dependents,
-                    $beneficiary->children,
-                    $beneficiary->senior_citizens,
-                    $beneficiary->pwd_members,
-                    $beneficiary->occupation,
-                    $beneficiary->source_of_income,
-                    $beneficiary->monthly_income,
-                    $beneficiary->employment_status,
+                    $beneficiary->is_familyhead,
                 ]), escape: '');
             }
 
@@ -204,25 +255,80 @@ class BeneficiaryController extends Controller
             'last_name' => ['required', 'string', 'max:255'],
             'suffix' => ['nullable', 'string', 'max:30'],
             'date_of_birth' => ['required', 'date', 'before_or_equal:today'],
-            'sex' => ['required', 'in:Male,Female,Other'],
-            'civil_status' => ['nullable', 'in:Single,Married,Widowed,Separated'],
+            'sex' => ['required', 'in:Male,Female'],
+            'civil_status' => ['nullable', 'in:Single,Married,Divorced,Widowed,Separated'],
             'contact_number' => ['nullable', 'string', 'max:30'],
-            'address' => ['nullable', 'string', 'max:2000'],
+            'purok' => ['nullable', 'string', 'max:255'],
             'barangay_id' => ['required', 'integer', 'exists:barangays,id'],
             'sector' => ['required', 'in:General Beneficiary,Senior Citizen,PWD,Solo Parent,Pregnant/Lactating,Indigenous People,PWUD,Other'],
-            'household_id' => ['nullable', 'string', 'max:255'],
-            'household_members' => ['nullable', 'integer', 'min:1', 'max:65535'],
-            'dependents' => ['nullable', 'integer', 'min:0', 'max:65535'],
-            'children' => ['nullable', 'integer', 'min:0', 'max:65535'],
-            'senior_citizens' => ['nullable', 'integer', 'min:0', 'max:65535'],
-            'pwd_members' => ['nullable', 'integer', 'min:0', 'max:65535'],
-            'occupation' => ['nullable', 'string', 'max:255'],
-            'source_of_income' => ['nullable', 'string', 'max:255'],
-            'monthly_income' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
-            'employment_status' => ['nullable', 'in:Self-employed,Employed,Unemployed,Informal'],
+            'is_familyhead' => ['required', 'boolean'],
         ];
+
+        // mag appear lang ni nga fields if beneficiary is a family head --shijme
         if ($includeDocument) {
-            $rules['id_document'] = ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'];
+            $rules = array_merge($rules, [
+                'household_members' => [
+                    'exclude_unless:is_familyhead,1',
+                    'required',
+                    'integer',
+                    'min:1',
+                ],
+                'dependents' => [
+                    'exclude_unless:is_familyhead,1',
+                    'required',
+                    'integer',
+                    'min:0',
+                ],
+                'children' => [
+                    'exclude_unless:is_familyhead,1',
+                    'required',
+                    'integer',
+                    'min:0',
+                ],
+                'senior_citizens' => [
+                    'exclude_unless:is_familyhead,1',
+                    'required',
+                    'integer',
+                    'min:0',
+                ],
+                'pwd_members' => [
+                    'exclude_unless:is_familyhead,1',
+                    'required',
+                    'integer',
+                    'min:0',
+                ],
+                'occupation' => [
+                    'exclude_unless:is_familyhead,1',
+                    'required',
+                    'string',
+                    'max:255',
+                ],
+                'source_of_income' => [
+                    'exclude_unless:is_familyhead,1',
+                    'required',
+                    'string',
+                    'max:255',
+                ],
+                'monthly_estimated_income' => [
+                    'exclude_unless:is_familyhead,1',
+                    'required',
+                    'numeric',
+                    'min:0',
+                ],
+                'employment_status' => [
+                    'exclude_unless:is_familyhead,1',
+                    'required',
+                    'string',
+                    'max:255',
+                ],
+            ]);
+
+            $rules['id_document'] = [
+                'nullable',
+                'file',
+                'mimes:jpg,jpeg,png,pdf',
+                'max:10240',
+            ];
         }
 
         return $rules;
@@ -231,20 +337,32 @@ class BeneficiaryController extends Controller
     private function csvHeaders(): array
     {
         return [
-            'first_name', 'middle_name', 'last_name', 'suffix', 'date_of_birth', 'sex',
-            'civil_status', 'contact_number', 'address', 'barangay', 'sector', 'household_id',
-            'household_members', 'dependents', 'children', 'senior_citizens', 'pwd_members',
-            'occupation', 'source_of_income', 'monthly_income', 'employment_status',
+            'first_name',
+            'middle_name',
+            'last_name',
+            'suffix',
+            'date_of_birth',
+            'sex',
+            'civil_status',
+            'contact_number',
+            'purok',
+            'barangay',
+            'sector',
+            'is_familyhead',
         ];
     }
 
-    private function safeCsvValue(mixed $value): mixed
-    {
+    private function safeCsvValue(mixed $value): mixed {
+
         // Butangi og apostrophe ang formula-like nga text aron dili ma-execute sa spreadsheet. -shaine
-        if (! is_string($value) || preg_match('/^[\s]*[=+\-@]/', $value) !== 1) {
+        if (
+            ! is_string($value)
+            || preg_match('/^[\s]*[=+\-@]/', $value) !== 1
+        ) {
             return $value;
         }
 
         return "'".$value;
+
     }
 }

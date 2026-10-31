@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Beneficiary extends Model
 {
@@ -16,33 +17,33 @@ class Beneficiary extends Model
         'sex',
         'civil_status',
         'contact_number',
-        'address',
+        'purok',
         'barangay_id',
         'sector',
-        'household_id',
-        'household_members',
-        'dependents',
-        'children',
-        'senior_citizens',
-        'pwd_members',
-        'occupation',
-        'source_of_income',
-        'monthly_income',
-        'employment_status',
+        'is_familyhead',
+        'verification_status',
         'id_document_path',
     ];
 
+    // gi change ko ang monthly income na field kay didto ko siya ibutang sa family heads table --shijme
     protected function casts(): array
     {
         return [
             'date_of_birth' => 'date',
-            'monthly_income' => 'decimal:2',
+            'is_familyhead' => 'boolean',
         ];
     }
+
 
     public function barangay(): BelongsTo
     {
         return $this->belongsTo(Barangay::class);
+    }
+
+    // mag check if ang beneficiary is also a family head --shijme
+    public function familyHead(): HasOne
+    {
+        return $this->hasOne(FamilyHead::class);
     }
 
     public function getFullNameAttribute(): string

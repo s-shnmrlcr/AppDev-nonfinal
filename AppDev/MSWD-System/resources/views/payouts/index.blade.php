@@ -24,6 +24,7 @@
                         <th>Amount</th>
                         <th>Date</th>
                         <th>Status</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -36,10 +37,16 @@
                             <td>{{ $p['amount'] }}</td>
                             <td>{{ $p['date'] }}</td>
                             <td><x-status-badge :status="$p['status']" /></td>
+                            {{-- action to view releases -shijme --}}
+                            <td>
+                                <a href="{{ route('payout-releases.index', $p['id']) }}" class="button button-secondary">
+                                    View Releases
+                                </a>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7">
+                            <td colspan="8">
                                 <div class="empty-state table-empty-state">
                                     <strong>No payout records</strong>
                                     <p>Payout records will appear here when they are available.</p>

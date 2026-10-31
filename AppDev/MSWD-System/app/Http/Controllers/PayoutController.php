@@ -14,10 +14,11 @@ class PayoutController extends Controller
             ->orderByDesc('created_at')
             ->get()
             ->map(fn (Payout $payout) => [
+                'id' => $payout->id,
                 'ref' => $payout->reference,
                 'beneficiary' => $payout->beneficiary->full_name,
                 'barangay' => $payout->beneficiary->barangay->name,
-                'program' => $payout->program->name,
+                'program' => $payout->program->program_name,
                 'amount' => '₱'.number_format((float) $payout->amount, 2),
                 'date' => $payout->released_at?->format('M j, Y') ?? '—',
                 'status' => $payout->status,
@@ -45,7 +46,7 @@ class PayoutController extends Controller
                     $payout->reference,
                     $payout->beneficiary->full_name,
                     $payout->beneficiary->barangay->name,
-                    $payout->program->name,
+                    $payout->program->program_name,
                     $payout->amount,
                     $payout->status,
                     $payout->released_at?->format('Y-m-d H:i:s'),

@@ -69,7 +69,7 @@
                         <th>Sector</th>
                         <th>Occupation</th>
                         <th>Verification</th>
-                        <th>Payout</th>
+                        {{-- <th>Payout</th> gi remove ko na ni sa beneficiary summary  -shijme--}}
                     </tr>
                 </thead>
                 <tbody>
@@ -81,9 +81,9 @@
                             <td>{{ $b['sex'] }}</td>
                             <td>{{ $b['barangay'] }}</td>
                             <td>{{ $b['sector'] }}</td>
-                            <td>{{ $b['occupation'] }}</td>
+                            <td>{{ $b['occupation'] ?? '—' }}</td>
                             <td><x-status-badge :status="$b['verification']" /></td>
-                            <td><x-status-badge :status="$b['payout']" /></td>
+                            {{-- <td><x-status-badge :status="$b['payout']" /></td> gi remove ko na ni sa beneficiary -shijme --}}
                         </tr>
                     @empty
                         <tr>
