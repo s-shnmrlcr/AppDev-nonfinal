@@ -63,18 +63,38 @@
         </section>
     @endif
 
-    {{-- EN: Require an available ID, document-check acknowledgment, and confirmation before updating; TL: Kailangan ang ID, kumpirmasyon ng pag-check, at final confirmation; Bisaya: Kinahanglan ang ID, kumpirmasyon sa pagsusi, ug final nga pag-uyon. -shaine --}}
+    {{-- EN: Provide the application review checklist and decision form;
+         TL: Ibigay ang checklist at form ng desisyon sa application review;
+         Bisaya: Ihatag ang checklist ug porma sa desisyon sa application review. --}}
     <section class="card form-section">
         <div class="section-heading">
-            <h3>Verification</h3>
-            <p>Current status: <x-status-badge :status="$beneficiary->verification_status" /></p>
+            <h3>Application Review</h3>
+            <p>
+                Current status:
+                <x-status-badge :status="$beneficiary->verification_status" />
+                {{-- Show remarks from the completed application review, if any. --}}
+                @if ($beneficiary->review_remarks)
+                    <div class="alert alert-info">
+                        <strong>Review Remarks:</strong>
+                        <p>{{ $beneficiary->review_remarks }}</p>
+                    </div>
+                @endif
+            </p>
         </div>
+
+        {{-- Show the uploaded ID document, if it is available. --}}
         <div class="detail-grid">
             <div>
                 <span>Identification Document</span>
                 <strong>
                     @if ($hasIdDocument)
-                        <a href="{{ route('beneficiaries.document', $beneficiary) }}" target="_blank" rel="noopener">View uploaded ID document</a>
+                        <a
+                            href="{{ route('beneficiaries.document', $beneficiary) }}"
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            View uploaded ID document
+                        </a>
                     @else
                         Not uploaded or unavailable
                     @endif
@@ -82,23 +102,165 @@
             </div>
         </div>
 
+        {{-- Only Pending applications can be reviewed through this form. --}}
         @if ($beneficiary->verification_status === 'Pending')
-            @if ($hasIdDocument)
-                <form method="POST" action="{{ route('beneficiaries.update-verification', $beneficiary) }}" class="form-actions" onsubmit="return confirm('Confirm that you reviewed the beneficiary information and checked all required documents before marking this beneficiary as Verified?')">
-                    @csrf
-                    @method('PATCH')
-                    <input type="hidden" name="verification_status" value="Verified">
+            <form
+                method="POST"
+                action="{{ route('beneficiaries.update-verification', $beneficiary) }}"
+                id="beneficiary-review-form"
+                onsubmit="return confirm('Are you sure you want to submit this application review decision?')"
+                style="display: flex; flex-direction: column; align-items: stretch; gap: 24px; margin-top: 24px;">
+
+                @csrf
+                @method('PATCH')
+
+                {{-- Checklist: each item must be acknowledged before submitting. --}}
+                <div style="width: 100%;">
+                    <h4>Review Checklist</h4>
+                    <p class="muted">
+                        Confirm that you have reviewed each applicable part of the application.
+                    </p>
+
                     <label class="checkbox-label">
-                        <input type="checkbox" name="documents_checked" value="1" required @checked(old('documents_checked'))>
-                        I have reviewed the beneficiary information and checked all required documents.
+                        <input
+                            type="checkbox"
+                            name="personal_info_checked"
+                            value="1"
+                            required
+                            @checked(old('personal_info_checked'))
+                        >
+                        I reviewed the beneficiary's personal information.
                     </label>
-                    <button type="submit" class="button button-primary">Mark as Verified</button>
-                </form>
-            @else
-                <p class="muted">An available ID document is required before this beneficiary can be verified.</p>
-            @endif
+
+                    <label class="checkbox-label">
+                        <input
+                            type="checkbox"
+                            name="address_checked"
+                            value="1"
+                            required
+                            @checked(old('address_checked'))
+                        >
+                        I checked the address, purok, and barangay information.
+                    </label>
+
+                    <label class="checkbox-label">
+                        <input
+                            type="checkbox"
+                            name="classification_checked"
+                            value="1"
+                            required
+                            @checked(old('classification_checked'))
+                        >
+                        I reviewed the beneficiary's sector and household information, if applicable.
+                    </label>
+
+                    <label class="checkbox-label">
+                        <input
+                            type="checkbox"
+                            name="documents_checked"
+                            value="1"
+                            required
+                            @checked(old('documents_checked'))
+                        >
+                        I checked the uploaded document for readability and consistency with the application.
+                    </label>
+                </div>
+
+                {{-- Let staff choose the application review decision. --}}
+                <div class="form-group" style="width: 100%;">
+                    <label for="verification_status">Review Decision</label>
+                    <select
+                        name="verification_status"
+                        id="verification_status"
+                        required
+                    >
+                        <option value="">Select a decision</option>
+                        <option
+                            value="Verified"
+                            @selected(old('verification_status') === 'Verified')
+                        >
+                            Verified
+                        </option>
+                        <option
+                            value="Needs Correction"
+                            @selected(old('verification_status') === 'Needs Correction')
+                        >
+                            Needs Correction
+                        </option>
+                        <option
+                            value="Rejected"
+                            @selected(old('verification_status') === 'Rejected')
+                        >
+                            Rejected
+                        </option>
+                    </select>
+                </div>
+
+                {{-- Remarks explain corrections or rejection; JavaScript toggles required,
+                     while the controller also enforces this rule server-side. --}}
+                <div class="form-group">
+                    <label for="remarks">
+                        Review Remarks
+                        <span class="muted">(Required for Needs Correction or Rejected)</span>
+                    </label>
+                    <textarea
+                        name="remarks"
+                        id="remarks"
+                        rows="4"
+                        maxlength="2000"
+                        placeholder="Explain what needs to be corrected or why the application is rejected."
+                    >{{ old('remarks') }}</textarea>
+                </div>
+
+                {{-- Display validation messages for individual form fields. --}}
+                @foreach ([
+                    'personal_info_checked',
+                    'address_checked',
+                    'classification_checked',
+                    'documents_checked',
+                    'verification_status',
+                    'remarks'
+                ] as $field)
+                    @error($field)
+                        <p class="text-danger">{{ $message }}</p>
+                    @enderror
+                @endforeach
+
+                <div style="display: flex; justify-content: flex-start; width: 100%;">
+                    <button
+                        type="submit"
+                        class="button button-primary"
+                        style="width: auto; min-width: 150px; height: auto; padding: 12px 24px;"
+                    >
+                        Submit Review
+                    </button>
+                </div>
+            </form>
+
+            {{-- Make remarks required in the browser for correction/rejection decisions. --}}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const decision = document.getElementById('verification_status');
+                    const remarks = document.getElementById('remarks');
+
+                    function updateRemarksRequirement() {
+                        const requiresRemarks = [
+                            'Needs Correction',
+                            'Rejected'
+                        ].includes(decision.value);
+
+                        remarks.required = requiresRemarks;
+                    }
+
+                    decision.addEventListener('change', updateRemarksRequirement);
+                    updateRemarksRequirement();
+                });
+            </script>
         @else
-            <p class="muted">This beneficiary's verification status can no longer be changed from this action.</p>
+            {{-- Reviewed applications cannot be changed through this form. --}}
+            <p class="muted">
+                This beneficiary's application review has already been completed.
+            </p>
         @endif
     </section>
 @endsection

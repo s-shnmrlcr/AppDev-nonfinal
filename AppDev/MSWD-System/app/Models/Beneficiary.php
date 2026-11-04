@@ -23,6 +23,7 @@ class Beneficiary extends Model
         'is_familyhead',
         'verification_status',
         'id_document_path',
+        'review_remarks',
     ];
 
     // gi change ko ang monthly income na field kay didto ko siya ibutang sa family heads table --shijme

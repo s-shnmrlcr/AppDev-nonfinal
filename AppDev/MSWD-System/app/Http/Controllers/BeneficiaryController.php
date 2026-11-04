@@ -61,32 +61,66 @@ class BeneficiaryController extends Controller
         return response()->file(Storage::disk('local')->path($beneficiary->id_document_path));
     }
 
-    public function updateVerification(Request $request, Beneficiary $beneficiary): RedirectResponse
+    public function updateVerification( Request $request, Beneficiary $beneficiary): RedirectResponse
     {
-        // EN: Accept only Verified and require an explicit document-check acknowledgment; TL: Verified lang ang payagan at kailangan ang kumpirmasyon ng dokumento; Bisaya: Verified ra ang dawaton ug kinahanglan kumpirmahon nga nasusi ang dokumento. -shaine
-        $validated = $request->validate([
-            'verification_status' => ['required', 'in:Verified'],
-            'documents_checked' => ['required', 'accepted'],
-        ]);
-
-        // EN: Prevent changes unless the beneficiary is still Pending; TL: Pigilan ang pagbabago kung hindi na Pending; Bisaya: Ayaw tugoti ang kausaban kon dili na Pending. -shaine
+        // Only allow review decisions while the beneficiary is still Pending.
+        // This prevents changing a decision that has already been made.
         abort_unless($beneficiary->verification_status === 'Pending', 409);
 
-        // EN: Do not verify without an available ID document; TL: Huwag i-verify kung walang available na ID; Bisaya: Ayaw i-verify kon walay magamit nga ID. -shaine
-        if (! $this->hasAvailableIdDocument($beneficiary)) {
+        // Validate the review form before updating the beneficiary.
+        $validated = $request->validate([
+            // Allow only these three staff review decisions.
+            'verification_status' => [
+                'required',
+                'in:Verified,Needs Correction,Rejected',
+            ],
+
+            // Require staff to confirm that each review area was checked.
+            'personal_info_checked' => ['required', 'accepted'],
+            'address_checked' => ['required', 'accepted'],
+            'classification_checked' => ['required', 'accepted'],
+            'documents_checked' => ['required', 'accepted'],
+
+            // Remarks are required when the application needs correction
+            // or is rejected. They are optional for Verified.
+            'remarks' => [
+                'required_if:verification_status,Needs Correction,Rejected',
+                'nullable',
+                'string',
+                'max:2000',
+            ],
+        ]);
+
+        // A beneficiary cannot be marked Verified unless an ID document
+        // exists and is available in the expected storage location.
+        if (
+            $validated['verification_status'] === 'Verified'
+            && ! $this->hasAvailableIdDocument($beneficiary)
+        ) {
+            // Return a validation error to the review form.
             throw ValidationException::withMessages([
-                'documents_checked' => 'The beneficiary ID document must be uploaded and available before verification.',
+                'documents_checked' =>
+                    'An available ID document is required before verification.',
             ]);
         }
 
-        // EN: Update only the verification field to preserve all other beneficiary data; TL: Status lang ang baguhin para mapanatili ang ibang impormasyon; Bisaya: Status ra ang usbon aron magpabilin ang ubang detalye. -shaine
+        // Save the selected review status to the beneficiaries table.
         $beneficiary->update([
             'verification_status' => $validated['verification_status'],
+            'review_remarks' => $validated['remarks'] ?? null,
         ]);
 
+        // Choose a user-friendly message based on the selected decision.
+        $message = match ($validated['verification_status']) {
+            'Verified' => 'Beneficiary marked as Verified.',
+            'Needs Correction' => 'Beneficiary marked as Needs Correction.',
+            'Rejected' => 'Beneficiary application rejected.',
+        };
+
+        // Return to the beneficiary review page and display the message.
         return redirect()
             ->route('beneficiaries.show', $beneficiary)
-            ->with('status', 'Beneficiary verification status updated to Verified.');
+            ->with('status', $message);
     }
 
     private function hasAvailableIdDocument(Beneficiary $beneficiary): bool

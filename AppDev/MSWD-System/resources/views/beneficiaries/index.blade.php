@@ -86,7 +86,7 @@
                             <td>{{ $b['occupation'] ?? '—' }}</td>
                             <td><x-status-badge :status="$b['verification']" /></td>
                             {{-- EN: Link to the full details and authorized verification action; TL: Link ito sa buong detalye at verification action; Bisaya: Link kini sa kompleto nga detalye ug verification action. -shaine --}}
-                            <td><a href="{{ route('beneficiaries.show', $b['record_id']) }}" class="button button-secondary">View/Action</a></td>
+                            <td><a href="{{ route('beneficiaries.show', $b['record_id']) }}" class="button button-secondary">Review</a></td>
                             {{-- <td><x-status-badge :status="$b['payout']" /></td> gi remove ko na ni sa beneficiary -shijme --}}
                         </tr>
                     @empty
