@@ -3170,6 +3170,43 @@
     line-height: 1.55;
   }
 
+  .app-shell .identity-match-advisory {
+    padding: 16px 18px;
+    border: 1px solid #e8dfc7;
+    border-radius: 12px;
+    background: #fffdf7;
+  }
+
+  .app-shell .identity-match-advisory strong {
+    color: #374b42;
+    font-size: 12px;
+  }
+
+  .app-shell .identity-match-advisory p {
+    margin: 7px 0 4px;
+    color: #52635c;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .app-shell .identity-match-advisory small {
+    display: block;
+    color: #7b8174;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  .app-shell .identity-match-advisory .match-possible {
+    color: #277148;
+    font-weight: 700;
+  }
+
+  .app-shell .identity-match-advisory .match-unlikely,
+  .app-shell .identity-match-advisory .match-unavailable {
+    color: #9a4c36;
+    font-weight: 700;
+  }
+
   .app-shell .identity-review-form {
     margin-top: 22px;
     border-top-color: #e9ece5;
