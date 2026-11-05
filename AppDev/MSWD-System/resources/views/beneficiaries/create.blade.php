@@ -1,14 +1,15 @@
 @extends('layouts.app')
-@section('title', 'Add Beneficiary | MSWDO Kabacan')
-@section('page-title', 'Add Beneficiary')
-@section('breadcrumb', 'Beneficiaries / Add')
+@php($isEditing = isset($beneficiary))
+@section('title', ($isEditing ? 'Edit' : 'Add').' Beneficiary | MSWDO Kabacan')
+@section('page-title', $isEditing ? 'Edit Beneficiary' : 'Add Beneficiary')
+@section('breadcrumb', $isEditing ? 'Beneficiaries / Edit' : 'Beneficiaries / Add')
 
 @section('content')
     <div class="page-heading">
         <div>
             <div class="eyebrow">MASTERLIST</div>
-            <h1>Add Beneficiary</h1>
-            <p>Enter the beneficiary's information for registration.</p>
+            <h1>{{ $isEditing ? 'Edit Beneficiary' : 'Add Beneficiary' }}</h1>
+            <p>{{ $isEditing ? 'Update the beneficiary and household information.' : "Enter the beneficiary's information for registration." }}</p>
         </div>
     </div>
 
@@ -25,9 +26,12 @@
 
     <form class="form-layout"
           method="POST"
-          action="{{ route('beneficiaries.store') }}"
+          action="{{ $isEditing ? route('beneficiaries.update', $beneficiary) : route('beneficiaries.store') }}"
           enctype="multipart/form-data">
         @csrf
+        @if ($isEditing)
+            @method('PUT')
+        @endif
 
         {{-- PERSONAL INFORMATION --}}
         <section class="card form-section">
@@ -40,7 +44,7 @@
                 <label>
                     First Name
                     <input name="first_name"
-                           value="{{ old('first_name') }}"
+                           value="{{ old('first_name', $beneficiary->first_name ?? '') }}"
                            autocomplete="given-name"
                            maxlength="255"
                            required>
@@ -52,7 +56,7 @@
                 <label>
                     Middle Name
                     <input name="middle_name"
-                           value="{{ old('middle_name') }}"
+                           value="{{ old('middle_name', $beneficiary->middle_name ?? '') }}"
                            autocomplete="additional-name"
                            maxlength="255">
                     @error('middle_name')
@@ -63,7 +67,7 @@
                 <label>
                     Last Name
                     <input name="last_name"
-                           value="{{ old('last_name') }}"
+                           value="{{ old('last_name', $beneficiary->last_name ?? '') }}"
                            autocomplete="family-name"
                            maxlength="255"
                            required>
@@ -75,7 +79,7 @@
                 <label>
                     Suffix
                     <input name="suffix"
-                           value="{{ old('suffix') }}"
+                           value="{{ old('suffix', $beneficiary->suffix ?? '') }}"
                            maxlength="30">
                     @error('suffix')
                         <small class="text-danger">{{ $message }}</small>
@@ -86,7 +90,7 @@
                     Date of Birth
                     <input name="date_of_birth"
                            type="date"
-                           value="{{ old('date_of_birth') }}"
+                           value="{{ old('date_of_birth', isset($beneficiary) ? $beneficiary->date_of_birth->format('Y-m-d') : '') }}"
                            max="{{ now()->toDateString() }}"
                            required>
                     @error('date_of_birth')
@@ -97,12 +101,12 @@
                 <label>
                     Sex
                     <select name="sex" required>
-                        <option value="" disabled @selected(!old('sex'))>
+                        <option value="" disabled @selected(!old('sex', $beneficiary->sex ?? null))>
                             Select sex
                         </option>
                         @foreach (['Male', 'Female'] as $sex)
                             <option value="{{ $sex }}"
-                                @selected(old('sex') === $sex)>
+                                @selected(old('sex', $beneficiary->sex ?? null) === $sex)>
                                 {{ $sex }}
                             </option>
                         @endforeach
@@ -115,12 +119,12 @@
                 <label>
                     Civil Status
                     <select name="civil_status">
-                        <option value="" @selected(old('civil_status', '') === '')>
+                        <option value="" @selected(old('civil_status', $beneficiary->civil_status ?? '') === '')>
                             Select civil status
                         </option>
                         @foreach (['Single', 'Married', 'Divorced', 'Widowed', 'Separated'] as $civilStatus)
                             <option value="{{ $civilStatus }}"
-                                @selected(old('civil_status') === $civilStatus)>
+                                @selected(old('civil_status', $beneficiary->civil_status ?? null) === $civilStatus)>
                                 {{ $civilStatus }}
                             </option>
                         @endforeach
@@ -134,7 +138,7 @@
                     Contact Number
                     <input name="contact_number"
                            type="tel"
-                           value="{{ old('contact_number') }}"
+                           value="{{ old('contact_number', $beneficiary->contact_number ?? '') }}"
                            autocomplete="tel"
                            maxlength="30">
                     @error('contact_number')
@@ -155,7 +159,7 @@
                 <label>
                     Street Address / Purok
                     <input name="purok"
-                           value="{{ old('purok') }}"
+                           value="{{ old('purok', $beneficiary->purok ?? '') }}"
                            autocomplete="address-line1"
                            maxlength="255">
                     @error('purok')
@@ -166,12 +170,12 @@
                 <label>
                     Barangay
                     <select name="barangay_id" required>
-                        <option value="" disabled @selected(!old('barangay_id'))>
+                        <option value="" disabled @selected(!old('barangay_id', $beneficiary->barangay_id ?? null))>
                             Select barangay
                         </option>
                         @foreach ($barangays as $barangay)
                             <option value="{{ $barangay->id }}"
-                                @selected((string) old('barangay_id') === (string) $barangay->id)>
+                                @selected((string) old('barangay_id', $beneficiary->barangay_id ?? '') === (string) $barangay->id)>
                                 {{ $barangay->name }}
                             </option>
                         @endforeach
@@ -196,7 +200,7 @@
                     <label for="sector">Sector</label>
 
                     <select name="sector" id="sector" required>
-                        <option value="" disabled @selected(!old('sector'))>
+                        <option value="" disabled @selected(!old('sector', $beneficiary->sector ?? null))>
                             Select sector
                         </option>
 
@@ -211,7 +215,7 @@
                             'Other'
                         ] as $sector)
                             <option value="{{ $sector }}"
-                                @selected(old('sector') === $sector)>
+                                @selected(old('sector', $beneficiary->sector ?? null) === $sector)>
                                 {{ $sector }}
                             </option>
                         @endforeach
@@ -224,7 +228,7 @@
                     {{-- SHOW ONLY WHEN OTHER IS SELECTED --}}
                     <div id="other-sector-container"
                         class="conditional-field"
-                        @if (old('sector') !== 'Other') hidden @endif>
+                        @if (old('sector', $beneficiary->sector ?? null) !== 'Other') hidden @endif>
 
                         <label for="other_sector">Specify Sector</label>
 
@@ -235,7 +239,7 @@
                             value="{{ old('other_sector') }}"
                             placeholder="Enter the beneficiary's sector"
                             maxlength="255"
-                            @if (old('sector') === 'Other') required @endif
+                            @if (old('sector', $beneficiary->sector ?? null) === 'Other') required @endif
                         >
 
                         @error('other_sector')
@@ -252,12 +256,12 @@
                             id="is_familyhead"
                             required>
                         <option value="0"
-                            @selected(old('is_familyhead', '0') == '0')>
+                            @selected(old('is_familyhead', isset($beneficiary) ? (string) (int) $beneficiary->is_familyhead : '0') == '0')>
                             No
                         </option>
 
                         <option value="1"
-                            @selected(old('is_familyhead') == '1')>
+                            @selected(old('is_familyhead', isset($beneficiary) ? (string) (int) $beneficiary->is_familyhead : '0') == '1')>
                             Yes
                         </option>
                     </select>
@@ -272,7 +276,7 @@
         {{-- FAMILY HEAD INFORMATION --}}
         <section class="card form-section"
                  id="family-head-section"
-                 @if (old('is_familyhead', '0') != '1') hidden @endif>
+                 @if (old('is_familyhead', isset($beneficiary) ? (string) (int) $beneficiary->is_familyhead : '0') != '1') hidden @endif>
 
             <div class="section-heading">
                 <h3>Household &amp; Economic Information</h3>
@@ -289,7 +293,7 @@
                            type="number"
                            min="1"
                            step="1"
-                           value="{{ old('household_members') }}"
+                           value="{{ old('household_members', $beneficiary->familyHead?->household_members ?? '') }}"
                            data-family-required>
                     @error('household_members')
                         <small class="text-danger">{{ $message }}</small>
@@ -302,7 +306,7 @@
                            type="number"
                            min="0"
                            step="1"
-                           value="{{ old('dependents') }}"
+                           value="{{ old('dependents', $beneficiary->familyHead?->dependents ?? '') }}"
                            data-family-required>
                     @error('dependents')
                         <small class="text-danger">{{ $message }}</small>
@@ -315,7 +319,7 @@
                            type="number"
                            min="0"
                            step="1"
-                           value="{{ old('children') }}"
+                           value="{{ old('children', $beneficiary->familyHead?->children ?? '') }}"
                            data-family-required>
                     @error('children')
                         <small class="text-danger">{{ $message }}</small>
@@ -328,7 +332,7 @@
                            type="number"
                            min="0"
                            step="1"
-                           value="{{ old('senior_citizens') }}"
+                           value="{{ old('senior_citizens', $beneficiary->familyHead?->senior_citizens ?? '') }}"
                            data-family-required>
                     @error('senior_citizens')
                         <small class="text-danger">{{ $message }}</small>
@@ -341,7 +345,7 @@
                            type="number"
                            min="0"
                            step="1"
-                           value="{{ old('pwd_members') }}"
+                           value="{{ old('pwd_members', $beneficiary->familyHead?->pwd_members ?? '') }}"
                            data-family-required>
                     @error('pwd_members')
                         <small class="text-danger">{{ $message }}</small>
@@ -351,7 +355,7 @@
                 <label>
                     Occupation
                     <input name="occupation"
-                           value="{{ old('occupation') }}"
+                           value="{{ old('occupation', $beneficiary->familyHead?->occupation ?? '') }}"
                            maxlength="255"
                            data-family-required>
                     @error('occupation')
@@ -362,7 +366,7 @@
                 <label>
                     Source of Income
                     <input name="source_of_income"
-                           value="{{ old('source_of_income') }}"
+                           value="{{ old('source_of_income', $beneficiary->familyHead?->source_of_income ?? '') }}"
                            maxlength="255"
                            data-family-required>
                     @error('source_of_income')
@@ -376,7 +380,7 @@
                            type="number"
                            min="0"
                            step="0.01"
-                           value="{{ old('monthly_estimated_income') }}"
+                           value="{{ old('monthly_estimated_income', $beneficiary->familyHead?->monthly_estimated_income ?? '') }}"
                            data-family-required>
                     @error('monthly_estimated_income')
                         <small class="text-danger">{{ $message }}</small>
@@ -395,7 +399,7 @@
                             'Not applicable'
                         ] as $employmentStatus)
                             <option value="{{ $employmentStatus }}"
-                                @selected(old('employment_status') === $employmentStatus)>
+                                @selected(old('employment_status', $beneficiary->familyHead?->employment_status ?? null) === $employmentStatus)>
                                 {{ $employmentStatus }}
                             </option>
                         @endforeach
@@ -411,12 +415,14 @@
         <section class="card form-section">
             <div class="section-heading">
                 <h3>Identification Document</h3>
-                <p>Optionally upload a document for identity verification.</p>
+                <p>
+                    {{ $isEditing ? 'Upload a new document only if you want to replace the current one.' : 'Optionally upload a document for identity verification.' }}
+                </p>
             </div>
 
             <div class="upload-box">
                 <div class="upload-icon">↑</div>
-                <strong>Upload ID document</strong>
+                <strong>{{ $isEditing && $beneficiary->id_document_path ? 'Replace ID document' : 'Upload ID document' }}</strong>
                 <span>JPG, JPEG, PNG or PDF up to 10 MB</span>
                 <input name="id_document"
                        type="file"
@@ -434,7 +440,7 @@
             </a>
 
             <button class="button button-primary" type="submit">
-                Save Beneficiary
+                {{ $isEditing ? 'Update Beneficiary' : 'Save Beneficiary' }}
             </button>
         </div>
     </form>

@@ -570,6 +570,28 @@
     text-decoration: none;
     font-size: 11px;
   }
+  .beneficiary-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .beneficiary-actions form {
+    margin: 0;
+  }
+  .beneficiary-actions .button {
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+  .button-danger {
+    background: #fff;
+    border-color: #f0c9c9;
+    color: #b42318;
+  }
+  .button-danger:hover {
+    background: #fff5f5;
+    border-color: #e8a9a9;
+  }
   .mono {
     font-family: ui-monospace, SFMono-Regular, monospace;
     font-size: 10px !important;

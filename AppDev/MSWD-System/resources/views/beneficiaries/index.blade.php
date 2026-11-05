@@ -89,7 +89,19 @@
                             <td>{{ $b['sector'] }}</td>
                             <td><x-status-badge :status="$b['verification']" /></td>
                             {{-- EN: Link to the full details and authorized verification action; TL: Link ito sa buong detalye at verification action; Bisaya: Link kini sa kompleto nga detalye ug verification action. -shaine --}}
-                            <td><a href="{{ route('beneficiaries.show', $b['record_id']) }}" class="button button-secondary">Review</a></td>
+                            <td>
+                                <div class="beneficiary-actions">
+                                    <a href="{{ route('beneficiaries.show', $b['record_id']) }}" class="button button-secondary">Review</a>
+                                    <a href="{{ route('beneficiaries.edit', $b['record_id']) }}" class="button button-secondary">Edit</a>
+                                    <form method="POST"
+                                          action="{{ route('beneficiaries.destroy', $b['record_id']) }}"
+                                          onsubmit="return confirm('Are you sure you want to delete this beneficiary? This action cannot be undone.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="button button-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
                             {{-- <td><x-status-badge :status="$b['payout']" /></td> gi remove ko na ni sa beneficiary -shijme --}}
                         </tr>
                     @empty

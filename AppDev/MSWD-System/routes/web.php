@@ -27,6 +27,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/beneficiaries', [BeneficiaryController::class, 'index'])->name('beneficiaries.index');
     Route::get('/beneficiaries/create', [BeneficiaryController::class, 'create'])->name('beneficiaries.create');
     Route::post('/beneficiaries', [BeneficiaryController::class, 'store'])->name('beneficiaries.store');
+    Route::get('/beneficiaries/{beneficiary}/edit', [BeneficiaryController::class, 'edit'])->name('beneficiaries.edit');
+    Route::put('/beneficiaries/{beneficiary}', [BeneficiaryController::class, 'update'])->name('beneficiaries.update');
+    Route::delete('/beneficiaries/{beneficiary}', [BeneficiaryController::class, 'destroy'])->name('beneficiaries.destroy');
     Route::post('/beneficiaries/import', [BeneficiaryController::class, 'import'])->name('beneficiaries.import');
     Route::get('/beneficiaries/export', [BeneficiaryController::class, 'export'])->name('beneficiaries.export');
     // EN: Keep beneficiary details and ID documents behind authentication; TL: Nasa ilalim ng authentication ang detalye at ID; Bisaya: Kinahanglan naka-login aron ma-access ang detalye ug ID. -shaine

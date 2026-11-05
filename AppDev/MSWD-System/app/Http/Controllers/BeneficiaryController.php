@@ -31,6 +31,7 @@ class BeneficiaryController extends Controller
                 'purok' => $beneficiary->purok,
                 'barangay' => $beneficiary->barangay->name,
                 'contact_number' => $beneficiary->contact_number,
+                'contact_number' => $beneficiary->contact_number,
                 'sector' => $beneficiary->sector,
                 'verification' => $beneficiary->verification_status,
 
@@ -140,6 +141,14 @@ class BeneficiaryController extends Controller
         return view('beneficiaries.create', compact('barangays'));
     }
 
+    public function edit(Beneficiary $beneficiary)
+    {
+        $beneficiary->load(['barangay', 'familyHead']);
+        $barangays = DB::table('barangays')->orderBy('name')->get(['id', 'name']);
+
+        return view('beneficiaries.create', compact('beneficiary', 'barangays'));
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate($this->beneficiaryRules());
@@ -197,6 +206,90 @@ class BeneficiaryController extends Controller
         return redirect()
             ->route('beneficiaries.index')
             ->with('status', 'Beneficiary registered successfully.');
+    }
+
+    public function update(Request $request, Beneficiary $beneficiary): RedirectResponse
+    {
+        $validated = $request->validate($this->beneficiaryRules());
+
+        $document = $validated['id_document'] ?? null;
+        unset($validated['id_document']);
+
+        $familyHeadFields = [
+            'household_members',
+            'dependents',
+            'children',
+            'senior_citizens',
+            'pwd_members',
+            'occupation',
+            'source_of_income',
+            'monthly_estimated_income',
+            'employment_status',
+        ];
+        $familyHeadData = array_intersect_key($validated, array_flip($familyHeadFields));
+        $beneficiaryData = array_diff_key($validated, array_flip($familyHeadFields));
+        $previousDocumentPath = $beneficiary->id_document_path;
+
+        DB::transaction(function () use (
+            $beneficiary,
+            &$beneficiaryData,
+            $familyHeadData,
+            $document
+        ): void {
+            if ($document !== null) {
+                $path = $document->store('beneficiary-ids', 'local');
+                if ($path === false) {
+                    throw new RuntimeException('The ID document could not be stored.');
+                }
+
+                $beneficiaryData['id_document_path'] = $path;
+            }
+
+            $beneficiary->update($beneficiaryData);
+
+            if ($beneficiary->is_familyhead) {
+                $beneficiary->familyHead()->updateOrCreate([], $familyHeadData);
+            } else {
+                $beneficiary->familyHead()->delete();
+            }
+        });
+
+        if (
+            $document !== null
+            && is_string($previousDocumentPath)
+            && dirname($previousDocumentPath) === 'beneficiary-ids'
+        ) {
+            Storage::disk('local')->delete($previousDocumentPath);
+        }
+
+        return redirect()
+            ->route('beneficiaries.index')
+            ->with('status', 'Beneficiary updated successfully.');
+    }
+
+    public function destroy(Beneficiary $beneficiary): RedirectResponse
+    {
+        if (DB::table('payouts')->where('beneficiary_id', $beneficiary->id)->exists()) {
+            return redirect()
+                ->route('beneficiaries.index')
+                ->withErrors([
+                    'beneficiary' => 'This beneficiary cannot be deleted because payout records are linked to them.',
+                ]);
+        }
+
+        $documentPath = $beneficiary->id_document_path;
+        $beneficiary->delete();
+
+        if (
+            is_string($documentPath)
+            && dirname($documentPath) === 'beneficiary-ids'
+        ) {
+            Storage::disk('local')->delete($documentPath);
+        }
+
+        return redirect()
+            ->route('beneficiaries.index')
+            ->with('status', 'Beneficiary deleted successfully.');
     }
 
     public function import(Request $request): RedirectResponse
