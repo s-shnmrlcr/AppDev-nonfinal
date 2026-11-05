@@ -9,7 +9,7 @@
             <div class="eyebrow">IN-PERSON CLAIM</div>
             <h1>Claimant Identity Check</h1>
             <p>Compare the claimant’s face with the portrait on their uploaded ID.</p>
-            <p class="identity-privacy">On-device face comparison is advisory only. Staff must make the final decision. Images are not uploaded or saved.</p>
+            <p class="identity-privacy">On-device face comparison is advisory only. Staff must make the final decision. When a review is submitted, the captured photo and selected ID image are saved in restricted storage and retained with the audit record.</p>
         </div>
     </div>
 
@@ -72,9 +72,26 @@
             <small>A match score is not proof of identity or liveness and has not been calibrated for every ID or photo. Review both images yourself.</small>
         </div>
 
-        <form method="POST" action="{{ route('verification.review') }}" id="identityReviewForm" class="identity-review-form">
+        <form method="POST" action="{{ route('verification.review') }}" id="identityReviewForm" class="identity-review-form" enctype="multipart/form-data">
             @csrf
             <input type="hidden" name="decision" id="reviewDecision" value="">
+            <input type="file" name="captured_photo" id="capturedPhotoUpload" hidden>
+            <input type="file" name="id_image" id="idImageUpload" hidden>
+            <label class="claimant-select-label" for="beneficiaryId">
+                Applicant
+                <select name="beneficiary_id" id="beneficiaryId" required>
+                    <option value="">Select the registered applicant</option>
+                    @foreach ($beneficiaries as $beneficiary)
+                        <option value="{{ $beneficiary->id }}"
+                            @selected((string) old('beneficiary_id') === (string) $beneficiary->id)>
+                            BEN-{{ str_pad((string) $beneficiary->id, 6, '0', STR_PAD_LEFT) }} — {{ $beneficiary->full_name }}
+                        </option>
+                    @endforeach
+                </select>
+                @if ($beneficiaries->isEmpty())
+                    <small>No registered beneficiaries are available. Add a beneficiary before recording an identity review.</small>
+                @endif
+            </label>
             <div class="button-group">
                 <button type="submit" name="decision" value="matched" class="button button-primary" disabled>
                     Identity matches

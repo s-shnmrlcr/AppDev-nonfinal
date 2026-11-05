@@ -18,6 +18,9 @@ if (check) {
     const reviewStatus = document.getElementById('reviewStatus');
     const reviewForm = document.getElementById('identityReviewForm');
     const reviewDecision = document.getElementById('reviewDecision');
+    const beneficiarySelect = document.getElementById('beneficiaryId');
+    const capturedPhotoUpload = document.getElementById('capturedPhotoUpload');
+    const idImageUpload = document.getElementById('idImageUpload');
     const reviewButtons = reviewForm.querySelectorAll('button[type="submit"]');
 
     const distanceThreshold = 0.6;
@@ -28,14 +31,17 @@ if (check) {
     let modelsPromise = null;
     let comparisonRun = 0;
     let comparing = false;
+    let capturedPhotoReady = false;
 
     function updateReviewAvailability() {
-        const ready = captured && selectedId && !comparing;
+        const ready = captured && capturedPhotoReady && selectedId && beneficiarySelect.value !== '' && !comparing;
         reviewButtons.forEach(button => {
             button.disabled = !ready;
         });
 
-        if (!captured || !selectedId) {
+        if (!beneficiarySelect.value) {
+            reviewStatus.textContent = 'Select the registered applicant, capture a photo, and choose an ID image to enable review.';
+        } else if (!captured || !capturedPhotoReady || !selectedId) {
             reviewStatus.textContent = 'Capture a photo and select an ID image to enable review.';
         } else if (comparing) {
             reviewStatus.textContent = 'Comparing faces on this device. Review decisions will be enabled when the comparison finishes.';
@@ -49,6 +55,8 @@ if (check) {
             reviewDecision.value = button.value;
         });
     });
+
+    beneficiarySelect.addEventListener('change', updateReviewAvailability);
 
     function loadModels() {
         if (!modelsPromise) {
@@ -160,7 +168,7 @@ if (check) {
         }
     });
 
-    captureButton.addEventListener('click', () => {
+    captureButton.addEventListener('click', async () => {
         if (!cameraStream || !camera.videoWidth) {
             cameraStatus.textContent = 'Wait for the camera preview before capturing.';
             return;
@@ -176,12 +184,38 @@ if (check) {
         }
 
         context.drawImage(camera, 0, 0);
+        captured = true;
+        capturedPhotoReady = false;
+        updateReviewAvailability();
+
+        try {
+            const photoBlob = await new Promise((resolve, reject) => {
+                captureCanvas.toBlob(blob => {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error('Captured photo could not be encoded.'));
+                    }
+                }, 'image/jpeg', 0.9);
+            });
+            const captureFile = new File([photoBlob], 'claimant-photo.jpg', { type: 'image/jpeg' });
+            const transfer = new DataTransfer();
+            transfer.items.add(captureFile);
+            capturedPhotoUpload.files = transfer.files;
+            capturedPhotoReady = true;
+        } catch (error) {
+            captured = false;
+            console.error('Captured claimant photo could not be prepared for secure review storage.', error);
+            cameraStatus.textContent = 'The captured photo could not be prepared for secure review storage. Please retake the photo.';
+            updateReviewAvailability();
+            return;
+        }
+
         cameraStream.getTracks().forEach(track => track.stop());
         camera.srcObject = null;
         cameraStream = null;
         captureCanvas.classList.remove('hidden');
         camera.classList.add('hidden');
-        captured = true;
         captureButton.disabled = true;
         retakeButton.hidden = false;
         cameraStatus.textContent = 'Photo captured. Face comparison runs only on this device.';
@@ -193,6 +227,8 @@ if (check) {
         comparisonRun++;
         comparing = false;
         captured = false;
+        capturedPhotoReady = false;
+        capturedPhotoUpload.value = '';
         captureCanvas.classList.add('hidden');
         camera.classList.add('hidden');
         cameraPrompt.classList.remove('hidden');
@@ -209,6 +245,7 @@ if (check) {
         comparisonRun++;
         comparing = false;
         selectedId = false;
+        idImageUpload.value = '';
         if (idImageUrl) {
             URL.revokeObjectURL(idImageUrl);
         }
@@ -242,14 +279,18 @@ if (check) {
         }
 
         idImageUrl = URL.createObjectURL(file);
+        const idFileTransfer = new DataTransfer();
+        idFileTransfer.items.add(file);
+        idImageUpload.files = idFileTransfer.files;
         idPreview.onload = () => {
             selectedId = true;
-            idStatus.textContent = 'ID image ready. Both images will be analyzed on this device only.';
+            idStatus.textContent = 'ID image ready. Comparison stays on this device; both images are saved only if you submit the review.';
             updateReviewAvailability();
             void compareFaces();
         };
         idPreview.onerror = () => {
             selectedId = false;
+            idImageUpload.value = '';
             idStatus.textContent = 'Image preview failed. Choose another file.';
             updateReviewAvailability();
         };
@@ -259,9 +300,9 @@ if (check) {
     });
 
     reviewForm.addEventListener('submit', event => {
-        if (!captured || !selectedId || comparing) {
+        if (!beneficiarySelect.value || !captured || !capturedPhotoReady || !selectedId || comparing) {
             event.preventDefault();
-            reviewStatus.textContent = 'Wait for the local comparison to finish and ensure both images are ready.';
+            reviewStatus.textContent = 'Select an applicant and wait for both images and the local comparison to be ready.';
             return;
         }
 

@@ -2989,7 +2989,7 @@
     font-size: 10px;
   }
 
-  .app-shell .alert {
+  .app-shell .alert:not(.alert-info) {
     padding: 12px 15px;
     border: 1px solid transparent;
     border-radius: 10px;
@@ -3004,6 +3004,155 @@
   .app-shell .alert-success {
     border: 1px solid #d7e9dc;
     border-radius: 10px;
+  }
+
+  .app-shell .alert {
+    position: fixed;
+    z-index: 100;
+    top: 22px;
+    right: 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: min(440px, calc(100vw - 32px));
+    margin: 0;
+    padding: 15px 16px;
+    border: 1px solid #e4e8e2;
+    border-left: 4px solid #718181;
+    border-radius: 12px;
+    background: #fff;
+    color: #314342;
+    box-shadow: 0 16px 42px rgba(27, 49, 45, 0.18);
+    font-size: 13px;
+    line-height: 1.5;
+    max-height: 50vh;
+    overflow-y: auto;
+    animation: feedback-enter 180ms ease-out both;
+  }
+
+  .app-shell .alert:not(.alert-info)::before {
+    display: grid;
+    flex: 0 0 22px;
+    width: 22px;
+    height: 22px;
+    place-items: center;
+    border-radius: 50%;
+    background: #edf1f0;
+    color: #526461;
+    content: "i";
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .app-shell .alert-success:not(.alert-info) {
+    border-color: #d7e9dc;
+    border-left-color: #25845f;
+    background: #fbfefc;
+    color: #236449;
+  }
+
+  .app-shell .alert-success:not(.alert-info)::before {
+    background: #e6f5eb;
+    color: #25845f;
+    content: "✓";
+  }
+
+  .app-shell .alert-danger:not(.alert-info) {
+    border-color: #f0d7d3;
+    border-left-color: #bd4d43;
+    background: #fffdfc;
+    color: #8e352e;
+  }
+
+  .app-shell .alert-danger:not(.alert-info)::before {
+    background: #fff0ed;
+    color: #bd4d43;
+    content: "!";
+  }
+
+  .app-shell .alert-info {
+    border-left-color: #3976a8;
+    background: #fbfdff;
+    color: #315d7e;
+  }
+
+  .app-shell .alert-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .app-shell .alert-content > :first-child {
+    margin-top: 0;
+  }
+
+  .app-shell .alert-content > :last-child {
+    margin-bottom: 0;
+  }
+
+  .app-shell .alert-content ul {
+    padding-left: 18px;
+  }
+
+  .app-shell .alert-dismiss {
+    display: grid;
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    margin: -4px -5px 0 auto;
+    padding: 0;
+    place-items: center;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: currentColor;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    opacity: 0.7;
+  }
+
+  .app-shell .alert-dismiss:hover,
+  .app-shell .alert-dismiss:focus-visible {
+    background: rgba(31, 55, 51, 0.08);
+    opacity: 1;
+  }
+
+  .app-shell .alert.is-leaving {
+    animation: feedback-leave 160ms ease-in both;
+  }
+
+  @keyframes feedback-enter {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes feedback-leave {
+    to {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .app-shell .alert:not(.alert-info) {
+      top: 12px;
+      right: 12px;
+      width: calc(100vw - 24px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app-shell .alert:not(.alert-info),
+    .app-shell .alert:not(.alert-info).is-leaving {
+      animation-duration: 1ms;
+    }
   }
 
   /* Program ug report summaries share sa parehong spacing ug label scale. -shaine */
@@ -3132,6 +3281,63 @@
     padding: clamp(18px, 2.5vw, 28px);
   }
 
+  .app-shell .identity-review-record {
+    display: grid;
+    gap: 24px;
+    padding: clamp(18px, 2.5vw, 28px);
+  }
+
+  .app-shell .identity-review-meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e9ece5;
+  }
+
+  .app-shell .identity-review-meta span {
+    display: block;
+    margin-bottom: 6px;
+    color: #71817a;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .app-shell .identity-review-meta strong {
+    color: #2e4440;
+    font-size: 13px;
+  }
+
+  .app-shell .identity-review-images {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .app-shell .identity-review-image {
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid #e9ece5;
+    border-radius: 12px;
+    background: #fcfdfa;
+  }
+
+  .app-shell .identity-review-image h2 {
+    margin: 0 0 12px;
+    color: #2e4440;
+    font-size: 13px;
+  }
+
+  .app-shell .identity-review-image img {
+    display: block;
+    width: 100%;
+    max-height: 520px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #f1f4ef;
+  }
+
   .app-shell .identity-panels {
     gap: 22px;
   }
@@ -3212,6 +3418,49 @@
     border-top-color: #e9ece5;
   }
 
+  .app-shell .identity-review-form .claimant-select-label {
+    display: grid;
+    gap: 7px;
+    max-width: 520px;
+    color: #344054;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .app-shell .identity-review-form .claimant-select-label select {
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid #d6e0e2;
+    border-radius: 9px;
+    background: #fff;
+    color: #344054;
+    font: inherit;
+    font-weight: 400;
+  }
+
+  .app-shell .identity-review-form .claimant-select-label small {
+    color: #9a4c36;
+    font-size: 10px;
+    font-weight: 400;
+  }
+
+  .audit-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .audit-actions form {
+    margin: 0;
+  }
+
+  .audit-actions .button {
+    min-height: 34px;
+    padding: 7px 10px;
+  }
+
   .app-shell .identity-review-form .button:disabled {
     cursor: not-allowed;
     opacity: 0.55;
@@ -3277,6 +3526,11 @@
   }
 
   @media (max-width: 650px) {
+    .app-shell .identity-review-meta,
+    .app-shell .identity-review-images {
+      grid-template-columns: 1fr;
+    }
+
     .app-shell .topbar {
       height: 64px;
       padding: 0 14px;

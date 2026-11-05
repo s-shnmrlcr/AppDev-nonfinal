@@ -41,6 +41,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/verification', [VerificationController::class, 'index'])->name('verification.index');
     Route::post('/verification/review', [VerificationController::class, 'review'])->name('verification.review');
+    Route::get('/verification/reviews/{log}', [VerificationController::class, 'showReview'])->name('verification.logs.show');
+    Route::get('/verification/reviews/{log}/capture', [VerificationController::class, 'capturePhoto'])->name('verification.logs.capture');
+    Route::get('/verification/reviews/{log}/id-image', [VerificationController::class, 'idImage'])->name('verification.logs.id-image');
 
     Route::get('/programs', [ProgramController::class, 'index'])->name('programs.index');
     Route::get('/programs/create', [ProgramController::class, 'create'])->name('programs.create');
@@ -58,6 +61,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/audit-logs', [AuditController::class, 'index'])->name('audit-logs.index');
+    Route::delete('/audit-logs/{log}', [AuditController::class, 'destroy'])->name('audit-logs.destroy');
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
 });

@@ -1,4 +1,40 @@
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.app-shell .alert[role="alert"], .app-shell .alert[role="status"]').forEach(alert => {
+        const content = document.createElement('div');
+        content.className = 'alert-content';
+        while (alert.firstChild) {
+            content.append(alert.firstChild);
+        }
+        alert.append(content);
+
+        const dismissButton = document.createElement('button');
+        dismissButton.type = 'button';
+        dismissButton.className = 'alert-dismiss';
+        dismissButton.setAttribute('aria-label', 'Dismiss notification');
+        dismissButton.textContent = '×';
+        dismissButton.addEventListener('click', () => dismissAlert(alert));
+        alert.append(dismissButton);
+
+        if (alert.classList.contains('alert-success') || alert.getAttribute('role') === 'status') {
+            window.setTimeout(() => dismissAlert(alert), 6500);
+        }
+    });
+
+    document.querySelectorAll('time[data-local-datetime]').forEach(timeElement => {
+        const date = new Date(timeElement.dateTime);
+        if (Number.isNaN(date.getTime())) {
+            return;
+        }
+
+        timeElement.textContent = new Intl.DateTimeFormat(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+        }).format(date);
+    });
+
     const sidebar = document.getElementById('sidebar');
     const menu = document.getElementById('mobileMenu');
     const overlay = document.getElementById('mobileOverlay');
@@ -29,5 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 matchStatus.className = 'match-unavailable';
             }
         });
+
+        function dismissAlert(alert) {
+            if (!alert.isConnected || alert.classList.contains('is-leaving')) {
+                return;
+            }
+
+            alert.classList.add('is-leaving');
+            alert.addEventListener('animationend', () => alert.remove(), { once: true });
+        }
     }
 });
