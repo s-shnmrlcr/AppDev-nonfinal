@@ -54,6 +54,7 @@
                 <option>Verified</option>
                 <option>Pending</option>
                 <option>Rejected</option>
+                <option>Needs Correction</option>
             </select>
         </div>
 
@@ -63,11 +64,12 @@
                     <tr>
                         <th>ID</th>
                         <th>Full Name</th>
-                        <th>Age</th>
                         <th>Sex</th>
+                        <th>Age</th>
+                        <th>Purok</th>
                         <th>Barangay</th>
+                        <th>Contact No.</th>
                         <th>Sector</th>
-                        <th>Occupation</th>
                         <th>Verification</th>
                         {{-- EN: Open the selected record without creating a duplicate; TL: Buksan ang napiling record nang walang duplicate; Bisaya: Ablihi ang napiling record nga walay madugang nga duplicate. -shaine --}}
                         <th>Action</th>
@@ -79,11 +81,12 @@
                         <tr data-beneficiary data-barangay="{{ $b['barangay'] }}" data-sector="{{ $b['sector'] }}" data-verification="{{ $b['verification'] }}">
                             <td class="mono">{{ $b['id'] }}</td>
                             <td><strong>{{ $b['name'] }}</strong></td>
-                            <td>{{ $b['age'] }}</td>
                             <td>{{ $b['sex'] }}</td>
+                            <td>{{ $b['age'] }}</td>
+                            <td>{{ $b['purok'] }}</td>
                             <td>{{ $b['barangay'] }}</td>
+                            <td>{{ $b['contact_number'] }}</td>
                             <td>{{ $b['sector'] }}</td>
-                            <td>{{ $b['occupation'] ?? '—' }}</td>
                             <td><x-status-badge :status="$b['verification']" /></td>
                             {{-- EN: Link to the full details and authorized verification action; TL: Link ito sa buong detalye at verification action; Bisaya: Link kini sa kompleto nga detalye ug verification action. -shaine --}}
                             <td><a href="{{ route('beneficiaries.show', $b['record_id']) }}" class="button button-secondary">Review</a></td>

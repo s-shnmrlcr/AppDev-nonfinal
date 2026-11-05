@@ -30,8 +30,8 @@ class BeneficiaryController extends Controller
                 'sex' => $beneficiary->sex,
                 'purok' => $beneficiary->purok,
                 'barangay' => $beneficiary->barangay->name,
+                'contact_number' => $beneficiary->contact_number,
                 'sector' => $beneficiary->sector,
-                'occupation' => $beneficiary->familyHead?->occupation ?? '—',
                 'verification' => $beneficiary->verification_status,
 
                 // 'payout' => $beneficiary->payout_status, gi move ko ni sa payouts table --shijme
