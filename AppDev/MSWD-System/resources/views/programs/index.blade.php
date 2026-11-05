@@ -11,16 +11,34 @@
             <p>Manage assistance programs, eligibility criteria, and coverage.</p>
         </div><a href="{{ route('programs.create') }}" class="button button-primary">+ Create Program</a>
     </div>
+    @if ($errors->any())
+        <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
+    @endif
+    @if (session('status'))
+        <div class="alert alert-success" role="status">{{ session('status') }}</div>
+    @endif
     <div class="card-grid">
         @foreach ($programs as $program)
             <div class="card program-card">
                 <div class="program-top"><span class="program-id">{{ $program['id'] }}</span><x-status-badge
                         :status="$program['status']" /></div>
                 <h3>{{ $program['name'] }}</h3>
-                <p>{{ $program['type'] }}</p>
+                <p>{{ $program['description'] }}</p>
                 <div class="program-amount">{{ $program['amount'] }}</div>
-                <div class="program-meta"><span>Coverage<strong>{{ $program['coverage'] }}</strong></span><span>End
-                    date<strong>{{ $program['end'] }}</strong></span></div>
+                <div class="program-meta">
+                    <span>Start date<strong>{{ $program['start'] }}</strong></span>
+                    <span>End date<strong>{{ $program['end'] }}</strong></span>
+                </div>
+                <div class="program-actions">
+                    <a href="{{ route('programs.edit', $program['record_id']) }}" class="button button-secondary">Edit</a>
+                    <form method="POST"
+                          action="{{ route('programs.destroy', $program['record_id']) }}"
+                          onsubmit="return confirm('Are you sure you want to delete this payout program? This action cannot be undone.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="button button-danger">Delete</button>
+                    </form>
+                </div>
             </div>
         @endforeach
         @if (count($programs) === 0)
@@ -33,7 +51,4 @@
             </div>
         @endif
     </div>
-    @if (session('status'))
-        <div class="alert alert-success" role="status">{{ session('status') }}</div>
-    @endif
 @endsection

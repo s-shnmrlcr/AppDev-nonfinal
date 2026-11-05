@@ -3014,11 +3014,13 @@
 
   .app-shell .program-card {
     padding: 22px;
+    display: flex;
+    flex-direction: column;
   }
 
   .app-shell .program-card h3 {
     color: #2e4440;
-    font-size: 16px;
+    font-size: 18px;
     line-height: 1.35;
   }
 
@@ -3045,6 +3047,42 @@
   .app-shell .program-meta strong {
     color: #40534e;
     font-size: 10px;
+  }
+
+  .program-actions {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid #eef0ea;
+  }
+
+  .program-actions form {
+    display: flex;
+    flex: 1;
+    margin: 0;
+  }
+
+  .program-actions .button {
+    width: 100%;
+    min-height: 38px;
+    padding: 8px 12px;
+    justify-content: center;
+  }
+
+  .app-shell .program-actions .button-danger {
+    border: 1px solid #f0d7d1;
+    background: #fff8f6;
+    color: #a74b38;
+    box-shadow: none;
+  }
+
+  .app-shell .program-actions .button-danger:hover {
+    border-color: #e7b9ae;
+    background: #fff1ed;
+    color: #8d3929;
   }
 
   .app-shell .report-card {
