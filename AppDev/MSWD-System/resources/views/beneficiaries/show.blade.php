@@ -108,70 +108,74 @@
                 method="POST"
                 action="{{ route('beneficiaries.update-verification', $beneficiary) }}"
                 id="beneficiary-review-form"
+                class="review-form"
                 onsubmit="return confirm('Are you sure you want to submit this application review decision?')"
-                style="display: flex; flex-direction: column; align-items: stretch; gap: 24px; margin-top: 24px;">
+            >
 
                 @csrf
                 @method('PATCH')
 
                 {{-- Checklist: each item must be acknowledged before submitting. --}}
-                <div style="width: 100%;">
+                <div class="review-checklist-wrap">
                     <h4>Review Checklist</h4>
                     <p class="muted">
                         Confirm that you have reviewed each applicable part of the application.
                     </p>
 
-                    <label class="checkbox-label">
-                        <input
-                            type="checkbox"
-                            name="personal_info_checked"
-                            value="1"
-                            required
-                            @checked(old('personal_info_checked'))
-                        >
-                        I reviewed the beneficiary's personal information.
-                    </label>
+                    <div class="review-checklist">
+                        <label class="checkbox-label">
+                            <input
+                                type="checkbox"
+                                name="personal_info_checked"
+                                value="1"
+                                required
+                                @checked(old('personal_info_checked'))
+                            >
+                            <span>I reviewed the beneficiary's personal information.</span>
+                        </label>
 
-                    <label class="checkbox-label">
-                        <input
-                            type="checkbox"
-                            name="address_checked"
-                            value="1"
-                            required
-                            @checked(old('address_checked'))
-                        >
-                        I checked the address, purok, and barangay information.
-                    </label>
+                        <label class="checkbox-label">
+                            <input
+                                type="checkbox"
+                                name="address_checked"
+                                value="1"
+                                required
+                                @checked(old('address_checked'))
+                            >
+                            <span>I checked the address, purok, and barangay information.</span>
+                        </label>
 
-                    <label class="checkbox-label">
-                        <input
-                            type="checkbox"
-                            name="classification_checked"
-                            value="1"
-                            required
-                            @checked(old('classification_checked'))
-                        >
-                        I reviewed the beneficiary's sector and household information, if applicable.
-                    </label>
+                        <label class="checkbox-label">
+                            <input
+                                type="checkbox"
+                                name="classification_checked"
+                                value="1"
+                                required
+                                @checked(old('classification_checked'))
+                            >
+                            <span>I reviewed the beneficiary's sector and household information, if applicable.</span>
+                        </label>
 
-                    <label class="checkbox-label">
-                        <input
-                            type="checkbox"
-                            name="documents_checked"
-                            value="1"
-                            required
-                            @checked(old('documents_checked'))
-                        >
-                        I checked the uploaded document for readability and consistency with the application.
-                    </label>
+                        <label class="checkbox-label">
+                            <input
+                                type="checkbox"
+                                name="documents_checked"
+                                value="1"
+                                required
+                                @checked(old('documents_checked'))
+                            >
+                            <span>I checked the uploaded document for readability and consistency with the application.</span>
+                        </label>
+                    </div>
                 </div>
 
                 {{-- Let staff choose the application review decision. --}}
-                <div class="form-group" style="width: 100%;">
+                <div class="form-group review-form-row">
                     <label for="verification_status">Review Decision</label>
                     <select
                         name="verification_status"
                         id="verification_status"
+                        class="review-select"
                         required
                     >
                         <option value="">Select a decision</option>
@@ -198,7 +202,7 @@
 
                 {{-- Remarks explain corrections or rejection; JavaScript toggles required,
                      while the controller also enforces this rule server-side. --}}
-                <div class="form-group">
+                <div class="form-group review-form-row">
                     <label for="remarks">
                         Review Remarks
                         <span class="muted">(Required for Needs Correction or Rejected)</span>
@@ -206,6 +210,7 @@
                     <textarea
                         name="remarks"
                         id="remarks"
+                        class="review-textarea"
                         rows="4"
                         maxlength="2000"
                         placeholder="Explain what needs to be corrected or why the application is rejected."
@@ -226,11 +231,10 @@
                     @enderror
                 @endforeach
 
-                <div style="display: flex; justify-content: flex-start; width: 100%;">
+                <div class="review-actions">
                     <button
                         type="submit"
-                        class="button button-primary"
-                        style="width: auto; min-width: 150px; height: auto; padding: 12px 24px;"
+                        class="button button-primary review-submit"
                     >
                         Submit Review
                     </button>
