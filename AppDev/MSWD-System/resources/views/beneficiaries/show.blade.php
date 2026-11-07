@@ -102,8 +102,8 @@
             </div>
         </div>
 
-        {{-- Only Pending applications can be reviewed through this form. --}}
-        @if ($beneficiary->verification_status === 'Pending')
+        {{-- Allow staff to review pending applications and applications with corrections. --}}
+        @if (in_array($beneficiary->verification_status, ['Pending', 'Needs Correction']))
             <form
                 method="POST"
                 action="{{ route('beneficiaries.update-verification', $beneficiary) }}"

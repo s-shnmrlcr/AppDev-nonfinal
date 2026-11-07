@@ -64,9 +64,12 @@ class BeneficiaryController extends Controller
 
     public function updateVerification( Request $request, Beneficiary $beneficiary): RedirectResponse
     {
-        // Only allow review decisions while the beneficiary is still Pending.
+        // Allow initial reviews and re-reviews after requested corrections.
         // This prevents changing a decision that has already been made.
-        abort_unless($beneficiary->verification_status === 'Pending', 409);
+        abort_unless(
+            in_array($beneficiary->verification_status, ['Pending', 'Needs Correction']),
+            409
+        );
 
         // Validate the review form before updating the beneficiary.
         $validated = $request->validate([
