@@ -22,7 +22,7 @@
 
     <section class="card identity-check-card"
              id="identityCheck"
-             data-model-path="{{ asset('models/face-api') }}">
+             data-model-path="{{ url('models/face-api') }}">
         <div class="identity-panels">
             <section class="identity-panel">
                 <div class="section-heading">
