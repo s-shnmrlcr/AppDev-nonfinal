@@ -118,8 +118,8 @@
 
         @else
 
-            <div class="table-responsive">
-                <table>
+            <div class="table-responsive table-scroll">
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>Reference</th>
