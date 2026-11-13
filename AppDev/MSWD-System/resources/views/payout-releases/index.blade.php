@@ -7,6 +7,18 @@
 
 @section('content')
 
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            {{ $errors->first() }}
+        </div>
+    @endif
+
+    @if (session('status'))
+        <div class="alert alert-success">
+            {{ session('status') }}
+        </div>
+    @endif
+
     <div class="page-heading">
         <div>
             <div class="eyebrow">RELEASE CONTROL</div>
@@ -67,6 +79,59 @@
         </div>
     </div>
 
+
+    {{-- Record a new assistance release --}}
+    <div class="card">
+        <h3>Record Release</h3>
+
+        <p>
+            Remaining Balance:
+            <strong>
+                ₱{{ number_format($remainingBalance, 2) }}
+            </strong>
+        </p>
+
+        @if ($remainingBalance > 0)
+
+            <form method="POST"
+                action="{{ route('payout-releases.store', $payout->id) }}">
+
+                @csrf
+
+                {{-- Staff only enters the release amount --}}
+                <div class="form-group">
+                    <label for="amount">Release Amount (₱)</label>
+
+                    <input
+                        type="number"
+                        id="amount"
+                        name="amount"
+                        class="form-control"
+                        min="0.01"
+                        max="{{ number_format($remainingBalance, 2, '.', '') }}"
+                        step="0.01"
+                        value="{{ old('amount') }}"
+                        placeholder="Enter amount to release"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="button button-primary">
+                    Record Release
+                </button>
+
+            </form>
+
+        @else
+
+            <div class="alert alert-success">
+                This payout has been fully released.
+            </div>
+
+        @endif
+    </div>
+
+
     {{-- Release history --}}
     <div class="card">
         <h3>Release History</h3>
@@ -81,8 +146,8 @@
 
         @else
 
-            <div class="table-responsive">
-                <table>
+            <div class="table-responsive table-scroll">
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>Release Reference</th>
