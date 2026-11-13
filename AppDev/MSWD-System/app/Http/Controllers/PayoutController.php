@@ -3,12 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payout;
+use App\Models\Program;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PayoutController extends Controller
 {
-    public function index()
+    // Display payout records with an optional program filter
+    public function index(Request $request)
     {
+        // Validate the selected program ID
+        $validated = $request->validate([
+            'program_id' => ['nullable', 'integer', 'exists:programs,id'],
+        ]);
+
+        // Get all payout records with their related beneficiary and program
         $payouts = Payout::query()
             ->with(['beneficiary.barangay', 'program'])
             ->orderByDesc('created_at')
@@ -24,23 +33,43 @@ class PayoutController extends Controller
                 'status' => $payout->status,
             ]);
 
-        return view('payouts.index', compact('payouts'));
+        // Get available programs for the program filter
+        $programs = Program::orderBy('program_name')->get();
+
+        return view('payouts.index', compact('payouts', 'programs'));
     }
 
-    public function export(): StreamedResponse
+    // Export payout records, respecting the selected program filter
+    public function export(Request $request): StreamedResponse
     {
+        // Validate the selected program ID
+        $validated = $request->validate([
+            'program_id' => ['nullable', 'integer', 'exists:programs,id'],
+        ]);
+
         $payouts = Payout::query()
             ->with(['beneficiary.barangay', 'program'])
+            ->when(
+                $validated['program_id'] ?? null,
+                fn ($query, $programId) => $query->where('program_id', $programId)
+            )
             ->orderBy('created_at')
             ->get();
 
         return response()->streamDownload(function () use ($payouts): void {
             $output = fopen('php://output', 'w');
+
             fputcsv($output, [
-                'reference', 'beneficiary', 'barangay', 'program', 'amount', 'status', 'released_at',
+                'reference',
+                'beneficiary',
+                'barangay',
+                'program',
+                'amount',
+                'status',
+                'released_at',
             ], escape: '');
 
-            // I-apil ang related records gikan sa preloaded relations aron walay dugang query matag payout. -shaine
+            // Include related records from the preloaded relationships
             foreach ($payouts as $payout) {
                 fputcsv($output, array_map($this->safeCsvValue(...), [
                     $payout->reference,
@@ -54,16 +83,18 @@ class PayoutController extends Controller
             }
 
             fclose($output);
-        }, 'payout-releases.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+        }, 'payout-releases.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
+    // Protect exported CSV values from spreadsheet formula injection
     private function safeCsvValue(mixed $value): mixed
     {
-        // Likayi nga ma-interpret isip spreadsheet formula ang mga text nga magsugod sa delikadong simbolo. -shaine
         if (! is_string($value) || preg_match('/^[\s]*[=+\-@]/', $value) !== 1) {
             return $value;
         }
 
-        return "'".$value;
+        return "'" . $value;
     }
 }
