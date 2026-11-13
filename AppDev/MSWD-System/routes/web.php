@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/payout-releases/{release}/status', [PayoutReleaseController::class, 'updateStatus'])->name('payout-releases.update-status');
 
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
     Route::get('/audit-logs', [AuditController::class, 'index'])->name('audit-logs.index');
     Route::delete('/audit-logs/{log}', [AuditController::class, 'destroy'])->name('audit-logs.destroy');
     Route::get('/users', [UserController::class, 'index'])->name('users.index');

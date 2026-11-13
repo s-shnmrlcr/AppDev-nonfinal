@@ -10,6 +10,10 @@
             <h1>Reports & Masterlists</h1>
             <p>Review beneficiary, verification, payout, barangay, and assistance statistics.</p>
         </div>
+
+        <a href="{{ route('reports.export') }}" class="button button-secondary" download>
+            Export Reports to Excel
+        </a>
     </div>
     <div class="report-cards">
         <div class="card report-card"><span>Beneficiary Report</span><strong>{{ number_format($beneficiaryCount) }}</strong><small>Registered beneficiaries</small></div>
