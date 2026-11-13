@@ -64,4 +64,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/audit-logs/{log}', [AuditController::class, 'destroy'])->name('audit-logs.destroy');
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+
+    // View verified beneficiaries and manage program assignments
+    Route::get('/programs/{program}/beneficiaries', [ProgramController::class, 'manageBeneficiaries'])->name('programs.beneficiaries');
+
+    // Save selected beneficiaries to the program
+    Route::post('/programs/{program}/beneficiaries', [ProgramController::class, 'assignBeneficiaries'])->name('programs.beneficiaries.assign');
 });

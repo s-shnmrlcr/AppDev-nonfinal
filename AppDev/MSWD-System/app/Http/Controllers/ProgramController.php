@@ -6,6 +6,10 @@ use App\Models\Program;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Models\Beneficiary;
+use App\Models\Payout;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ProgramController extends Controller
 {
@@ -92,5 +96,103 @@ class ProgramController extends Controller
         return redirect()
             ->route('programs.index')
             ->with('status', 'Payout program deleted.');
+    }
+
+    // Display verified beneficiaries who can be assigned to this program
+    public function manageBeneficiaries(Program $program)
+    {
+        // Get beneficiaries already assigned to this program
+        $assignedPayouts = $program->payouts()
+            ->with('beneficiary')
+            ->orderByDesc('created_at')
+            ->get();
+
+        // Get their IDs so they won't appear in the available list
+        $assignedIds = $assignedPayouts->pluck('beneficiary_id');
+
+        // Only verified beneficiaries who are not yet assigned
+        $availableBeneficiaries = Beneficiary::where('verification_status', 'Verified')
+            ->whereNotIn('id', $assignedIds)
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get();
+
+        return view('programs.beneficiaries', compact(
+            'program',
+            'assignedPayouts',
+            'availableBeneficiaries'
+        ));
+    }
+
+
+    // Assign selected beneficiaries to the program
+    public function assignBeneficiaries(Request $request, Program $program)
+    {
+        // Validate the fixed assistance amount and selected beneficiaries
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'beneficiary_ids' => ['required', 'array', 'min:1'],
+            'beneficiary_ids.*' => ['required', 'integer', 'distinct', 'exists:beneficiaries,id'],
+        ]);
+
+        $beneficiaryIds = $validated['beneficiary_ids'];
+        $amount = (float) $validated['amount'];
+
+        // Make sure every selected beneficiary is verified
+        $verifiedCount = Beneficiary::whereIn('id', $beneficiaryIds)
+            ->where('verification_status', 'Verified')
+            ->count();
+
+        if ($verifiedCount !== count($beneficiaryIds)) {
+            return back()->withErrors([
+                'beneficiary_ids' => 'Only verified beneficiaries can be assigned.'
+            ])->withInput();
+        }
+
+        // Prevent duplicate assignments
+        $alreadyAssigned = Payout::where('program_id', $program->id)
+            ->whereIn('beneficiary_id', $beneficiaryIds)
+            ->exists();
+
+        if ($alreadyAssigned) {
+            return back()->withErrors([
+                'beneficiary_ids' => 'One or more selected beneficiaries are already assigned to this program.'
+            ])->withInput();
+        }
+
+        // Check whether the remaining program budget can cover the assignments
+        $alreadyAllocated = (float) $program->payouts()->sum('amount');
+        $newAllocation = $amount * count($beneficiaryIds);
+
+        if (($alreadyAllocated + $newAllocation) > (float) $program->budget) {
+            return back()->withErrors([
+                'amount' => 'The total assistance amount exceeds the remaining program budget.'
+            ])->withInput();
+        }
+
+        // Create all payout records together
+        DB::transaction(function () use ($program, $beneficiaryIds, $amount) {
+
+            foreach ($beneficiaryIds as $beneficiaryId) {
+
+                // Generate a unique payout reference
+                do {
+                    $reference = 'PAY-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
+                } while (Payout::where('reference', $reference)->exists());
+
+                Payout::create([
+                    'reference' => $reference,
+                    'beneficiary_id' => $beneficiaryId,
+                    'program_id' => $program->id,
+                    'amount' => $amount,
+                    'status' => 'Pending',
+                    'released_at' => null,
+                ]);
+            }
+        });
+
+        return redirect()
+            ->route('programs.beneficiaries', $program->id)
+            ->with('status', count($beneficiaryIds) . ' beneficiary payout(s) successfully assigned.');
     }
 }

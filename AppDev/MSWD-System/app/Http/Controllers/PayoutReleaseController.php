@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Payout;
 use Illuminate\Http\Request;
+
 
 class PayoutReleaseController extends Controller
 {

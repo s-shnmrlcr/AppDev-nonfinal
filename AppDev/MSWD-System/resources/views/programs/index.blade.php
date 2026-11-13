@@ -30,6 +30,9 @@
                     <span>End date<strong>{{ $program['end'] }}</strong></span>
                 </div>
                 <div class="program-actions">
+                    <a href="{{ route('programs.beneficiaries', $program['record_id']) }}" class="button button-primary">
+                        Manage Beneficiaries
+                    </a>
                     <a href="{{ route('programs.edit', $program['record_id']) }}" class="button button-secondary">Edit</a>
                     <form method="POST"
                           action="{{ route('programs.destroy', $program['record_id']) }}"
