@@ -46,6 +46,7 @@ class AuthController extends Controller
             ->with('status', 'Your account has been created. Sign in to continue.');
     }
 
+
     public function login(Request $request): RedirectResponse
     {
         $request->merge([
@@ -57,19 +58,33 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (! $this->hasAuthorizedEmailDomain($credentials['email'])) {
+        // Check if the email matches the authorized Admin email. -Dan
+        $adminEmail = strtolower(trim((string) config('mswd.admin_email')));
+
+        if ($credentials['email'] !== $adminEmail) {
             throw ValidationException::withMessages([
-                'email' => 'Only authorized DSWD personnel can access this portal.',
+                'email' => 'Only the authorized Admin account can access this portal.',
             ]);
         }
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (!Auth::attempt($credentials, $request->boolean('remember'))) {
             throw ValidationException::withMessages([
                 'email' => 'These credentials do not match an account.',
             ]);
         }
+
+        // Check if the authenticated user has Admin role -Dan
+        if (Auth::user()->role !== 'Admin') {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'email' => 'You are not authorized to access this portal.',
+            ]);
+        }
+
         // Ilisi ang session ID human sa login aron malikayan ang session fixation. -shaine
-        $request->session()->regenerate();
         $request->session()->regenerate();
 
         return redirect()->route('dashboard');
@@ -91,5 +106,4 @@ class AuthController extends Controller
         // Suffix ang i-check aron parehas ang resulta bisag uppercase ang domain sa input. -shaine
         return str_ends_with(strtolower($email), $domain);
     }
-
 }
