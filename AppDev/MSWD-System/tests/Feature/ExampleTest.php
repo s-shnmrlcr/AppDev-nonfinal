@@ -6,6 +6,7 @@ use App\Models\Beneficiary;
 use App\Models\Payout;
 use App\Models\PayoutRelease;
 use App\Models\Program;
+use App\Models\TransactionLog;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -74,6 +75,55 @@ class ExampleTest extends TestCase
         $this->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Dashboard');
+    }
+
+    public function test_dashboard_charts_and_recent_activity_use_live_records_without_staff_names(): void
+    {
+        $user = User::factory()->create();
+        $barangayId = DB::table('barangays')->insertGetId([
+            'name' => 'Dashboard Barangay',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $beneficiary = Beneficiary::create([
+            'first_name' => 'Jamie',
+            'last_name' => 'Rivera',
+            'date_of_birth' => '1990-04-12',
+            'sex' => 'Female',
+            'barangay_id' => $barangayId,
+            'sector' => 'General Beneficiary',
+            'verification_status' => 'Verified',
+        ]);
+        $program = Program::create([
+            'program_name' => 'Dashboard Assistance',
+            'budget' => '2500.00',
+            'status' => 'Active',
+        ]);
+        Payout::create([
+            'reference' => 'PAY-DASHBOARD-001',
+            'beneficiary_id' => $beneficiary->id,
+            'program_id' => $program->id,
+            'amount' => '2500.00',
+            'status' => 'Released',
+            'released_at' => now(),
+        ]);
+
+        $this->actingAs($user);
+        TransactionLog::record(
+            'Private Staff Name',
+            'Beneficiary verified',
+            'Beneficiary',
+            $beneficiary->id
+        );
+
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Beneficiary Status')
+            ->assertSee('Payout Status')
+            ->assertSee('Dashboard Barangay')
+            ->assertSee('Beneficiary verified')
+            ->assertSee('--bar-height: 100%;', false)
+            ->assertDontSee('Private Staff Name');
     }
 
     public function test_staff_can_sign_out(): void
