@@ -13,8 +13,6 @@
         <div class="button-group">
             <form method="POST" action="{{ route('beneficiaries.import') }}" enctype="multipart/form-data" class="inline-import-form">
                 @csrf
-                <label for="importStaffName">Staff name</label>
-                <input id="importStaffName" name="staff_name" type="text" value="{{ old('staff_name') }}" maxlength="255" placeholder="Staff name" autocomplete="name" required>
                 <label class="button button-secondary import-label" for="masterlistFile">Import CSV</label>
                 <input id="masterlistFile" name="masterlist" type="file" accept=".csv,.txt,text/csv" required>
                 <button class="button button-secondary" type="submit">Upload</button>
@@ -100,10 +98,6 @@
                                           onsubmit="return confirm('Are you sure you want to delete this beneficiary? This action cannot be undone.');">
                                         @csrf
                                         @method('DELETE')
-                                        <label>
-                                            Staff name
-                                            <input name="staff_name" maxlength="255" autocomplete="name" required>
-                                        </label>
                                         <button type="submit" class="button button-danger">Delete</button>
                                     </form>
                                 </div>

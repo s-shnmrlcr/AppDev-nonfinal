@@ -15,18 +15,12 @@ class AuditController extends Controller
         $logs = DB::table('identity_verification_logs')
             ->join('users', 'identity_verification_logs.user_id', '=', 'users.id')
             ->leftJoin('beneficiaries', 'identity_verification_logs.beneficiary_id', '=', 'beneficiaries.id')
-            ->leftJoin('transaction_logs', function ($join) {
-                $join->on('transaction_logs.subject_id', '=', 'identity_verification_logs.id')
-                    ->where('transaction_logs.subject_type', '=', 'IdentityVerificationLog')
-                    ->where('transaction_logs.action', '=', 'Identity review recorded');
-            })
             ->select([
                 'identity_verification_logs.id',
                 'identity_verification_logs.beneficiary_id',
                 'identity_verification_logs.applicant_name',
                 'identity_verification_logs.decision',
                 'identity_verification_logs.created_at',
-                'transaction_logs.staff_name',
                 'users.name as account_name',
                 'users.email',
                 'beneficiaries.id as current_beneficiary_id',
@@ -44,23 +38,19 @@ class AuditController extends Controller
 
     public function destroy(Request $request, int $log): RedirectResponse
     {
-        $validated = $request->validate([
-            'staff_name' => ['required', 'string', 'max:255'],
-        ]);
-
         $review = DB::table('identity_verification_logs')
             ->where('id', $log)
             ->first(['id', 'captured_photo_path', 'id_image_path']);
 
         abort_if($review === null, 404);
 
-        DB::transaction(function () use ($review, $validated): void {
+        DB::transaction(function () use ($request, $review): void {
             DB::table('identity_verification_logs')
                 ->where('id', $review->id)
                 ->delete();
 
             TransactionLog::record(
-                $validated['staff_name'],
+                $request->user()->name,
                 'Identity review audit log deleted',
                 'IdentityVerificationLog',
                 $review->id

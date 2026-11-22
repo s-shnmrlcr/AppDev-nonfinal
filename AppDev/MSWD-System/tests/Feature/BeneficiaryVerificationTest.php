@@ -32,11 +32,40 @@ class BeneficiaryVerificationTest extends TestCase
             ->assertSee('Jane Beneficiary')
             ->assertSee('Pending')
             ->assertSee('View uploaded ID document')
+            ->assertDontSee('name="staff_name"', false)
             ->assertSee(route('beneficiaries.document', $beneficiary));
 
         $this->actingAs(User::factory()->create())
             ->get(route('beneficiaries.document', $beneficiary))
             ->assertOk();
+    }
+
+    public function test_new_beneficiary_registration_requires_a_staff_name(): void
+    {
+        $barangay = Barangay::create(['name' => 'Poblacion']);
+
+        $user = User::factory()->create();
+        $this->actingAs($user)
+            ->get(route('beneficiaries.create'))
+            ->assertOk()
+            ->assertSee('Staff name');
+
+        $this->actingAs($user)
+            ->from(route('beneficiaries.create'))
+            ->post(route('beneficiaries.store'), [
+                'first_name' => 'Jane',
+                'last_name' => 'Beneficiary',
+                'date_of_birth' => '1990-01-01',
+                'sex' => 'Female',
+                'barangay_id' => $barangay->id,
+                'sector' => 'General Beneficiary',
+                'is_familyhead' => 0,
+            ])
+            ->assertRedirect(route('beneficiaries.create'))
+            ->assertSessionHasErrors('staff_name');
+
+        $this->assertDatabaseCount('beneficiaries', 0);
+        $this->assertDatabaseCount('transaction_logs', 0);
     }
 
     // EN: Verify that an acknowledged review persists and appears in the listing; TL: Tiyaking nase-save at nakikita sa listahan ang status; Bisaya: Siguroa nga ma-save ug makita sa listahan ang status. -shaine
@@ -46,9 +75,9 @@ class BeneficiaryVerificationTest extends TestCase
         Storage::disk('local')->put('beneficiary-ids/id.pdf', 'verified test document');
         $beneficiary = $this->createBeneficiary('beneficiary-ids/id.pdf');
 
-        $this->actingAs(User::factory()->create())
+        $user = User::factory()->create(['name' => 'Maria Santos']);
+        $this->actingAs($user)
             ->patch(route('beneficiaries.update-verification', $beneficiary), [
-                'staff_name' => 'Maria Santos',
                 'verification_status' => 'Verified',
                 'personal_info_checked' => '1',
                 'address_checked' => '1',
@@ -62,7 +91,7 @@ class BeneficiaryVerificationTest extends TestCase
             'verification_status' => 'Verified',
         ]);
         $this->assertDatabaseHas('transaction_logs', [
-            'staff_name' => 'Maria Santos',
+            'staff_name' => $user->name,
             'action' => 'Beneficiary verification reviewed',
             'subject_id' => $beneficiary->id,
         ]);
@@ -70,6 +99,58 @@ class BeneficiaryVerificationTest extends TestCase
         $this->get(route('beneficiaries.index'))
             ->assertOk()
             ->assertSee('Verified');
+    }
+
+    public function test_beneficiary_update_does_not_request_a_staff_name(): void
+    {
+        $beneficiary = $this->createBeneficiary();
+        $user = User::factory()->create(['name' => 'Maria Santos']);
+
+        $this->actingAs($user)
+            ->get(route('beneficiaries.edit', $beneficiary))
+            ->assertOk()
+            ->assertDontSee('Staff name');
+
+        $this->actingAs($user)
+            ->put(route('beneficiaries.update', $beneficiary), [
+                'first_name' => 'Jane',
+                'last_name' => 'Updated',
+                'date_of_birth' => '1990-01-01',
+                'sex' => 'Female',
+                'barangay_id' => $beneficiary->barangay_id,
+                'sector' => 'General Beneficiary',
+                'is_familyhead' => 0,
+            ])
+            ->assertRedirect(route('beneficiaries.index'));
+
+        $this->assertDatabaseHas('beneficiaries', [
+            'id' => $beneficiary->id,
+            'last_name' => 'Updated',
+        ]);
+        $this->assertDatabaseHas('transaction_logs', [
+            'user_id' => $user->id,
+            'staff_name' => $user->name,
+            'action' => 'Beneficiary updated',
+            'subject_id' => $beneficiary->id,
+        ]);
+    }
+
+    public function test_beneficiary_delete_does_not_request_a_staff_name(): void
+    {
+        $beneficiary = $this->createBeneficiary();
+        $user = User::factory()->create(['name' => 'Maria Santos']);
+
+        $this->actingAs($user)
+            ->delete(route('beneficiaries.destroy', $beneficiary))
+            ->assertRedirect(route('beneficiaries.index'));
+
+        $this->assertDatabaseMissing('beneficiaries', ['id' => $beneficiary->id]);
+        $this->assertDatabaseHas('transaction_logs', [
+            'user_id' => $user->id,
+            'staff_name' => $user->name,
+            'action' => 'Beneficiary deleted',
+            'subject_id' => $beneficiary->id,
+        ]);
     }
 
     // EN: Ensure login is required and other status changes are rejected; TL: Tiyaking kailangan ang login at tinatanggihan ang ibang status; Bisaya: Siguroa nga kinahanglan ang login ug isalikway ang ubang status. -shaine
@@ -86,7 +167,6 @@ class BeneficiaryVerificationTest extends TestCase
 
         $this->actingAs(User::factory()->create())
             ->patch(route('beneficiaries.update-verification', $beneficiary), [
-                'staff_name' => 'Maria Santos',
                 'verification_status' => 'Pending',
                 'personal_info_checked' => '1',
                 'address_checked' => '1',
@@ -97,7 +177,6 @@ class BeneficiaryVerificationTest extends TestCase
 
         $this->actingAs(User::factory()->create())
             ->patch(route('beneficiaries.update-verification', $beneficiary), [
-                'staff_name' => 'Maria Santos',
                 'verification_status' => 'Verified',
                 'personal_info_checked' => '1',
                 'address_checked' => '1',
@@ -122,7 +201,6 @@ class BeneficiaryVerificationTest extends TestCase
         $this->actingAs($user)
             ->from(route('beneficiaries.show', $beneficiary))
             ->patch(route('beneficiaries.update-verification', $beneficiary), [
-                'staff_name' => 'Maria Santos',
                 'verification_status' => 'Verified',
                 'personal_info_checked' => '1',
                 'address_checked' => '1',
@@ -135,7 +213,6 @@ class BeneficiaryVerificationTest extends TestCase
         $this->actingAs($user)
             ->from(route('beneficiaries.show', $beneficiary))
             ->patch(route('beneficiaries.update-verification', $beneficiary), [
-                'staff_name' => 'Maria Santos',
                 'verification_status' => 'Verified',
                 'personal_info_checked' => '1',
                 'address_checked' => '1',
@@ -150,14 +227,14 @@ class BeneficiaryVerificationTest extends TestCase
         ]);
     }
 
-    public function test_verification_requires_a_staff_name_before_updating(): void
+    public function test_verification_does_not_request_a_staff_name(): void
     {
         Storage::fake('local');
         Storage::disk('local')->put('beneficiary-ids/id.pdf', 'verified test document');
         $beneficiary = $this->createBeneficiary('beneficiary-ids/id.pdf');
 
-        $this->actingAs(User::factory()->create())
-            ->from(route('beneficiaries.show', $beneficiary))
+        $user = User::factory()->create(['name' => 'Maria Santos']);
+        $this->actingAs($user)
             ->patch(route('beneficiaries.update-verification', $beneficiary), [
                 'verification_status' => 'Verified',
                 'personal_info_checked' => '1',
@@ -165,13 +242,18 @@ class BeneficiaryVerificationTest extends TestCase
                 'classification_checked' => '1',
                 'documents_checked' => '1',
             ])
-            ->assertSessionHasErrors('staff_name');
+            ->assertRedirect(route('beneficiaries.show', $beneficiary));
 
         $this->assertDatabaseHas('beneficiaries', [
             'id' => $beneficiary->id,
-            'verification_status' => 'Pending',
+            'verification_status' => 'Verified',
         ]);
-        $this->assertDatabaseCount('transaction_logs', 0);
+        $this->assertDatabaseHas('transaction_logs', [
+            'user_id' => $user->id,
+            'staff_name' => $user->name,
+            'action' => 'Beneficiary verification reviewed',
+            'subject_id' => $beneficiary->id,
+        ]);
     }
 
     // EN: Create one reusable Pending beneficiary for feature tests; TL: Gumawa ng reusable na Pending beneficiary para sa tests; Bisaya: Maghimo og reusable nga Pending beneficiary para sa mga test. -shaine

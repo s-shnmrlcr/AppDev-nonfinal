@@ -77,9 +77,12 @@
             <input type="hidden" name="decision" id="reviewDecision" value="">
             <input type="file" name="captured_photo" id="capturedPhotoUpload" hidden>
             <input type="file" name="id_image" id="idImageUpload" hidden>
-            <label for="staff_name">
-                Staff name
-                <input type="text" id="staff_name" name="staff_name" value="{{ old('staff_name') }}" maxlength="255" autocomplete="name" required>
+            <label class="staff-name-field" for="staff_name">
+                Staff who verified
+                <input class="staff-name-input" type="text" id="staff_name" name="staff_name" value="{{ old('staff_name') }}" maxlength="255" autocomplete="name" required>
+                @error('staff_name')
+                    <small class="text-danger">{{ $message }}</small>
+                @enderror
             </label>
             <label class="claimant-select-label" for="beneficiaryId">
                 Applicant

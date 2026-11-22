@@ -97,7 +97,6 @@ class ProgramController extends Controller
     public function update(Request $request, Program $program): RedirectResponse
     {
         $validated = $request->validate([
-            'staff_name' => ['required', 'string', 'max:255'],
             'program_name' => [
                 'required',
                 'string',
@@ -111,14 +110,11 @@ class ProgramController extends Controller
             'status' => ['required', 'in:Draft,Active'],
         ]);
 
-        $staffName = $validated['staff_name'];
-        unset($validated['staff_name']);
-
-        DB::transaction(function () use ($program, $validated, $staffName): void {
+        DB::transaction(function () use ($request, $program, $validated): void {
             $program->update($validated);
 
             TransactionLog::record(
-                $staffName,
+                $request->user()->name,
                 'Program updated',
                 'Program',
                 $program->id,
@@ -133,10 +129,6 @@ class ProgramController extends Controller
 
     public function destroy(Request $request, Program $program): RedirectResponse
     {
-        $validated = $request->validate([
-            'staff_name' => ['required', 'string', 'max:255'],
-        ]);
-
         if ($program->payouts()->exists()) {
             return redirect()
                 ->route('programs.index')
@@ -145,13 +137,13 @@ class ProgramController extends Controller
                 ]);
         }
 
-        DB::transaction(function () use ($program, $validated): void {
+        DB::transaction(function () use ($request, $program): void {
             $name = $program->program_name;
             $id = $program->id;
             $program->delete();
 
             TransactionLog::record(
-                $validated['staff_name'],
+                $request->user()->name,
                 'Program deleted',
                 'Program',
                 $id,
@@ -169,9 +161,35 @@ class ProgramController extends Controller
     {
         // Get beneficiaries already assigned to this program
         $assignedPayouts = $program->payouts()
-            ->with('beneficiary')
+            ->with(['beneficiary', 'releases.releasedBy'])
             ->orderByDesc('created_at')
             ->get();
+        $releaseStaffNames = TransactionLog::query()
+            ->where('subject_type', 'PayoutRelease')
+            ->whereIn(
+                'subject_id',
+                $assignedPayouts->flatMap(fn (Payout $payout) => $payout->releases->modelKeys())->unique()
+            )
+            ->latest('id')
+            ->get(['subject_id', 'staff_name'])
+            ->unique('subject_id')
+            ->keyBy('subject_id');
+        $releaseStaffByPayout = $assignedPayouts->mapWithKeys(fn (Payout $payout) => [
+            $payout->id => $payout->releases
+                ->map(fn ($release) => $releaseStaffNames->get($release->id)?->staff_name
+                    ?? $release->releasedBy?->name)
+                ->filter()
+                ->unique()
+                ->values(),
+        ]);
+        $assignmentStaffNames = TransactionLog::query()
+            ->where('subject_type', 'Payout')
+            ->where('action', 'Beneficiary assigned to program')
+            ->whereIn('subject_id', $assignedPayouts->modelKeys())
+            ->latest('id')
+            ->get(['subject_id', 'staff_name'])
+            ->unique('subject_id')
+            ->pluck('staff_name', 'subject_id');
 
         // Get their IDs so they won't appear in the available list
         $assignedIds = $assignedPayouts->pluck('beneficiary_id');
@@ -186,7 +204,9 @@ class ProgramController extends Controller
         return view('programs.beneficiaries', compact(
             'program',
             'assignedPayouts',
-            'availableBeneficiaries'
+            'availableBeneficiaries',
+            'releaseStaffByPayout',
+            'assignmentStaffNames'
         ));
     }
 
@@ -248,7 +268,7 @@ class ProgramController extends Controller
                     $reference = 'PAY-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
                 } while (Payout::where('reference', $reference)->exists());
 
-                Payout::create([
+                $payout = Payout::create([
                     'reference' => $reference,
                     'beneficiary_id' => $beneficiaryId,
                     'program_id' => $program->id,
@@ -256,6 +276,14 @@ class ProgramController extends Controller
                     'status' => 'Pending',
                     'released_at' => null,
                 ]);
+
+                TransactionLog::record(
+                    $staffName,
+                    'Beneficiary assigned to program',
+                    'Payout',
+                    $payout->id,
+                    'Program '.$program->program_name.'; beneficiary #'.$beneficiaryId
+                );
             }
 
             TransactionLog::record(

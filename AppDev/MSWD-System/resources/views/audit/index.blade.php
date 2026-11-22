@@ -23,7 +23,6 @@
                 <thead>
                     <tr>
                         <th>Date / Time</th>
-                        <th>Reviewed By</th>
                         <th>Account</th>
                         <th>Applicant</th>
                         <th>Decision</th>
@@ -37,7 +36,6 @@
                                 <time datetime="{{ \Illuminate\Support\Carbon::parse($log->created_at)->utc()->toIso8601String() }}"
                                       data-local-datetime>{{ \Illuminate\Support\Carbon::parse($log->created_at)->format('M j, Y g:i A') }}</time>
                             </td>
-                            <td><strong>{{ $log->staff_name ?? $log->account_name }}</strong></td>
                             <td>{{ $log->email }}</td>
                             <td>
                                 @if ($log->applicant_name)
@@ -55,10 +53,6 @@
                                           onsubmit="return confirm('Delete only this identity audit log and its saved images? The beneficiary record will not be changed.');">
                                         @csrf
                                         @method('DELETE')
-                                        <label>
-                                            Staff name
-                                            <input name="staff_name" maxlength="255" autocomplete="name" required>
-                                        </label>
                                         <button type="submit" class="button button-danger">Delete</button>
                                     </form>
                                 </div>
@@ -69,7 +63,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6">
+                            <td colspan="5">
                                 <div class="empty-state table-empty-state">
                                     <strong>No identity reviews recorded</strong>
                                     <p>Recorded claimant identity decisions will appear here.</p>
@@ -89,7 +83,6 @@
                 <thead>
                     <tr>
                         <th>Date / Time</th>
-                        <th>Staff name</th>
                         <th>Account</th>
                         <th>Action</th>
                         <th>Record</th>
@@ -103,7 +96,6 @@
                                 <time datetime="{{ $transactionLog->created_at->utc()->toIso8601String() }}"
                                       data-local-datetime>{{ $transactionLog->created_at->format('M j, Y g:i A') }}</time>
                             </td>
-                            <td><strong>{{ $transactionLog->staff_name }}</strong></td>
                             <td>{{ $transactionLog->user?->email ?? '—' }}</td>
                             <td>{{ $transactionLog->action }}</td>
                             <td>{{ $transactionLog->subject_type }}{{ $transactionLog->subject_id ? ' #'.$transactionLog->subject_id : '' }}</td>
@@ -111,7 +103,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6">
+                            <td colspan="5">
                                 <div class="empty-state table-empty-state">
                                     <strong>No transactions recorded</strong>
                                     <p>Transactions will appear here after staff submits them.</p>

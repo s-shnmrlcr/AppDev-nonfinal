@@ -3991,6 +3991,42 @@
     gap: 8px;
   }
 
+  .app-shell .staff-name-field {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    color: #435451;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .app-shell input.staff-name-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    padding: 9px 11px;
+    border: 1px solid #dfe5df;
+    border-radius: 9px;
+    background: #fff;
+    color: #344744;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 400;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+
+  .app-shell input.staff-name-input:focus {
+    border-color: #80a9a0;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(66, 128, 112, 0.1);
+  }
+
+  .beneficiary-actions {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
   .inline-import-form input[type="file"] {
     position: absolute;
     width: 1px;
@@ -4047,4 +4083,5 @@
     .inline-import-form {
       flex-wrap: wrap;
     }
+
   }

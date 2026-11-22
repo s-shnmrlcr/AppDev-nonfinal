@@ -91,8 +91,13 @@ class VerificationController extends Controller
             ->first();
 
         abort_if($review === null, 404);
+        $staffName = TransactionLog::query()
+            ->where('subject_type', 'IdentityVerificationLog')
+            ->where('subject_id', $review->id)
+            ->where('action', 'Identity review recorded')
+            ->value('staff_name');
 
-        return view('verification.review', compact('review'));
+        return view('verification.review', compact('review', 'staffName'));
     }
 
     public function capturePhoto(int $log)

@@ -30,6 +30,10 @@
                 <time datetime="{{ \Illuminate\Support\Carbon::parse($review->created_at)->utc()->toIso8601String() }}"
                       data-local-datetime>{{ \Illuminate\Support\Carbon::parse($review->created_at)->format('M j, Y g:i A') }}</time>
             </div>
+            <div>
+                <span>Staff name</span>
+                <strong>{{ $staffName ?: '—' }}</strong>
+            </div>
         </div>
 
         <div class="identity-review-images">

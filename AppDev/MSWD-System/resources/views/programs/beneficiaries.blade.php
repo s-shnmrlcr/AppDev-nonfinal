@@ -76,7 +76,19 @@
 
                 <div class="form-group">
                     <label for="staff_name">Staff name</label>
-                    <input id="staff_name" name="staff_name" value="{{ old('staff_name') }}" maxlength="255" autocomplete="name" required>
+                    <input
+                        type="text"
+                        id="staff_name"
+                        name="staff_name"
+                        class="form-control staff-name-input"
+                        value="{{ old('staff_name') }}"
+                        maxlength="255"
+                        autocomplete="name"
+                        required
+                    >
+                    @error('staff_name')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
                 </div>
 
                 <div class="form-group">
@@ -129,6 +141,8 @@
                         <tr>
                             <th>Reference</th>
                             <th>Beneficiary</th>
+                            <th>Assigned By</th>
+                            <th>Released By</th>
                             <th>Assistance Amount</th>
                             <th>Payout Status</th>
                         </tr>
@@ -143,6 +157,10 @@
                                     {{ $payout->beneficiary->first_name }}
                                     {{ $payout->beneficiary->last_name }}
                                 </td>
+
+                                <td>{{ $assignmentStaffNames->get($payout->id, '—') }}</td>
+
+                                <td>{{ $releaseStaffByPayout->get($payout->id, collect())->join(', ') ?: '—' }}</td>
 
                                 <td>
                                     ₱{{ number_format((float) $payout->amount, 2) }}

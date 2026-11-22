@@ -122,7 +122,7 @@
                         type="text"
                         id="staff_name"
                         name="staff_name"
-                        class="form-control"
+                        class="form-control staff-name-input"
                         value="{{ old('staff_name') }}"
                         maxlength="255"
                         autocomplete="name"

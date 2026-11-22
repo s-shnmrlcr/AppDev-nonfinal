@@ -29,4 +29,9 @@ class PayoutRelease extends Model
         return $this->belongsTo(Payout::class);
     }
 
+    public function releasedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'released_by');
+    }
+
 }

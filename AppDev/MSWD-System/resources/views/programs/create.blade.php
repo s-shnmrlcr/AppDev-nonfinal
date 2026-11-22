@@ -37,9 +37,11 @@
                         <option value="Active" @selected(old('status', $program->status ?? 'Draft') === 'Active')>Active</option>
                     </select>
                 </label>
-                <label>Staff name
-                    <input name="staff_name" value="{{ old('staff_name') }}" maxlength="255" autocomplete="name" required>
-                </label>
+                @unless ($isEditing)
+                    <label>Staff name
+                        <input class="staff-name-input" name="staff_name" value="{{ old('staff_name') }}" maxlength="255" autocomplete="name" required>
+                    </label>
+                @endunless
             </div>
         </section>
         <div class="form-actions">

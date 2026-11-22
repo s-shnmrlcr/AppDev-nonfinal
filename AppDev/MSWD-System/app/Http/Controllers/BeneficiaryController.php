@@ -49,8 +49,17 @@ class BeneficiaryController extends Controller
         // EN: Load related records for the complete review page; TL: I-load ang kaugnay na records para sa buong detalye; Bisaya: I-load ang mga kauban nga record para kompleto ang detalye. -shaine
         $beneficiary->load(['barangay', 'familyHead']);
         $hasIdDocument = $this->hasAvailableIdDocument($beneficiary);
+        $registrationStaffName = TransactionLog::query()
+            ->where('subject_type', 'Beneficiary')
+            ->where('subject_id', $beneficiary->id)
+            ->where('action', 'Beneficiary registered')
+            ->value('staff_name');
 
-        return view('beneficiaries.show', compact('beneficiary', 'hasIdDocument'));
+        return view('beneficiaries.show', compact(
+            'beneficiary',
+            'hasIdDocument',
+            'registrationStaffName'
+        ));
     }
 
     public function document(Beneficiary $beneficiary)
@@ -73,7 +82,6 @@ class BeneficiaryController extends Controller
 
         // Validate the review form before updating the beneficiary.
         $validated = $request->validate([
-            'staff_name' => ['required', 'string', 'max:255'],
             // Allow only these three staff review decisions.
             'verification_status' => [
                 'required',
@@ -109,14 +117,14 @@ class BeneficiaryController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($beneficiary, $validated): void {
+        DB::transaction(function () use ($request, $beneficiary, $validated): void {
             $beneficiary->update([
                 'verification_status' => $validated['verification_status'],
                 'review_remarks' => $validated['remarks'] ?? null,
             ]);
 
             TransactionLog::record(
-                $validated['staff_name'],
+                $request->user()->name,
                 'Beneficiary verification reviewed',
                 'Beneficiary',
                 $beneficiary->id,
@@ -235,12 +243,8 @@ class BeneficiaryController extends Controller
 
     public function update(Request $request, Beneficiary $beneficiary): RedirectResponse
     {
-        $validated = $request->validate($this->beneficiaryRules() + [
-            'staff_name' => ['required', 'string', 'max:255'],
-        ]);
+        $validated = $request->validate($this->beneficiaryRules());
 
-        $staffName = $validated['staff_name'];
-        unset($validated['staff_name']);
         $document = $validated['id_document'] ?? null;
         unset($validated['id_document']);
 
@@ -264,7 +268,7 @@ class BeneficiaryController extends Controller
             &$beneficiaryData,
             $familyHeadData,
             $document,
-            $staffName
+            $request
         ): void {
             if ($document !== null) {
                 $path = $document->store('beneficiary-ids', 'local');
@@ -284,7 +288,7 @@ class BeneficiaryController extends Controller
             }
 
             TransactionLog::record(
-                $staffName,
+                $request->user()->name,
                 'Beneficiary updated',
                 'Beneficiary',
                 $beneficiary->id
@@ -306,10 +310,6 @@ class BeneficiaryController extends Controller
 
     public function destroy(Request $request, Beneficiary $beneficiary): RedirectResponse
     {
-        $validated = $request->validate([
-            'staff_name' => ['required', 'string', 'max:255'],
-        ]);
-
         if (DB::table('payouts')->where('beneficiary_id', $beneficiary->id)->exists()) {
             return redirect()
                 ->route('beneficiaries.index')
@@ -319,12 +319,12 @@ class BeneficiaryController extends Controller
         }
 
         $documentPath = $beneficiary->id_document_path;
-        DB::transaction(function () use ($beneficiary, $validated): void {
+        DB::transaction(function () use ($request, $beneficiary): void {
             $id = $beneficiary->id;
             $beneficiary->delete();
 
             TransactionLog::record(
-                $validated['staff_name'],
+                $request->user()->name,
                 'Beneficiary deleted',
                 'Beneficiary',
                 $id
@@ -347,9 +347,8 @@ class BeneficiaryController extends Controller
     {
         $validated = $request->validate([
             'masterlist' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
-            'staff_name' => ['required', 'string', 'max:255'],
         ]);
-        $staffName = $validated['staff_name'];
+        $staffName = $request->user()->name;
 
         $handle = fopen($request->file('masterlist')->getRealPath(), 'r');
         if ($handle === false) {
@@ -443,16 +442,16 @@ class BeneficiaryController extends Controller
         // Usa ka transaction aron kompleto ang import o walay ma-save kung mamali ang pagsulat. -shaine
         DB::transaction(function () use ($rows, $staffName): void {
             foreach ($rows as $row) {
-                Beneficiary::create($row);
-            }
+                $beneficiary = Beneficiary::create($row);
 
-            TransactionLog::record(
-                $staffName,
-                'Beneficiaries imported',
-                'Beneficiary',
-                null,
-                count($rows).' beneficiary records imported.'
-            );
+                TransactionLog::record(
+                    $staffName,
+                    'Beneficiary registered',
+                    'Beneficiary',
+                    $beneficiary->id,
+                    'Imported from CSV.'
+                );
+            }
         });
 
         return redirect()

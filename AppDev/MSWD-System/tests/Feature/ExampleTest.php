@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Beneficiary;
 use App\Models\Payout;
+use App\Models\PayoutRelease;
 use App\Models\Program;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -108,13 +109,14 @@ class ExampleTest extends TestCase
             ->assertSee('uploaded ID document')
             ->assertSee('Start camera')
             ->assertSee('Identity matches')
+            ->assertSee('Staff who verified')
             ->assertSee('No facial recognition');
     }
 
     public function test_staff_identity_decision_is_saved_to_audit_log(): void
     {
         $this->assertFalse(Schema::hasColumn('identity_verification_logs', 'claim_reference'));
-        $user = User::factory()->create();
+        $user = User::factory()->create(['name' => 'Admin Account']);
         Storage::fake('local');
         $barangayId = DB::table('barangays')->insertGetId([
             'name' => 'Test Barangay',
@@ -158,12 +160,23 @@ class ExampleTest extends TestCase
             'action' => 'Identity review recorded',
         ]);
 
-        $this->get(route('audit-logs.index'))
+        $auditContent = $this->get(route('audit-logs.index'))
             ->assertOk()
             ->assertDontSee('Claim Reference')
             ->assertSee('Identity matches')
-            ->assertSee('Maria Santos')
-            ->assertSee('Transaction History');
+            ->assertSee('Transaction History')
+            ->getContent();
+        $auditTables = strstr($auditContent, '<table class="data-table">');
+        $this->assertNotFalse($auditTables);
+        $this->assertStringNotContainsString('Maria Santos', $auditTables);
+
+        $reviewId = DB::table('identity_verification_logs')
+            ->where('beneficiary_id', $beneficiary->id)
+            ->value('id');
+        $this->get(route('verification.logs.show', $reviewId))
+            ->assertOk()
+            ->assertSee('Staff name')
+            ->assertSee('Maria Santos');
     }
 
     public function test_identity_decision_must_be_valid_before_it_is_logged(): void
@@ -180,6 +193,18 @@ class ExampleTest extends TestCase
         $this->assertDatabaseCount('identity_verification_logs', 0);
     }
 
+    public function test_identity_review_requires_staff_name(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->from(route('verification.index'))
+            ->post(route('verification.review'), [])
+            ->assertRedirect(route('verification.index'))
+            ->assertSessionHasErrors('staff_name');
+
+        $this->assertDatabaseCount('identity_verification_logs', 0);
+        $this->assertDatabaseCount('transaction_logs', 0);
+    }
+
     public function test_beneficiary_can_be_created_and_exported(): void
     {
         $barangayId = DB::table('barangays')->insertGetId([
@@ -188,7 +213,8 @@ class ExampleTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $this->actingAs(User::factory()->create())
+        $user = User::factory()->create(['name' => 'Maria Santos']);
+        $this->actingAs($user)
             ->post(route('beneficiaries.store'), [
                 'first_name' => 'Jamie',
                 'staff_name' => 'Maria Santos',
@@ -209,7 +235,22 @@ class ExampleTest extends TestCase
         $this->assertDatabaseHas('transaction_logs', [
             'staff_name' => 'Maria Santos',
             'action' => 'Beneficiary registered',
+            'subject_type' => 'Beneficiary',
+            'subject_id' => Beneficiary::where('first_name', 'Jamie')->value('id'),
         ]);
+
+        $beneficiary = Beneficiary::where('first_name', 'Jamie')->firstOrFail();
+        $beneficiaryIndexContent = $this->actingAs($user)
+            ->get(route('beneficiaries.index'))
+            ->assertOk()
+            ->getContent();
+        $beneficiaryTable = strstr($beneficiaryIndexContent, '<table class="data-table" id="beneficiaryTable">');
+        $this->assertNotFalse($beneficiaryTable);
+        $this->assertStringNotContainsString('Maria Santos', $beneficiaryTable);
+        $this->actingAs($user)
+            ->get(route('beneficiaries.show', $beneficiary))
+            ->assertSee('Registered By')
+            ->assertSee('Maria Santos');
 
         $response = $this->actingAs(User::factory()->create())
             ->get(route('beneficiaries.export'))
@@ -228,9 +269,14 @@ class ExampleTest extends TestCase
         ]);
         $csv = "first_name,last_name,date_of_birth,sex,barangay,sector,is_familyhead\nJamie,Rivera,1990-04-12,Female,Test Barangay,General Beneficiary,0\n";
 
-        $this->actingAs(User::factory()->create())
+        $user = User::factory()->create(['name' => 'Maria Santos']);
+        $this->actingAs($user)
+            ->get(route('beneficiaries.index'))
+            ->assertOk()
+            ->assertDontSee('id="importStaffName"', false);
+
+        $this->actingAs($user)
             ->post(route('beneficiaries.import'), [
-                'staff_name' => 'Maria Santos',
                 'masterlist' => UploadedFile::fake()->createWithContent('masterlist.csv', $csv),
             ])
             ->assertRedirect(route('beneficiaries.index'))
@@ -241,10 +287,13 @@ class ExampleTest extends TestCase
             'last_name' => 'Rivera',
             'verification_status' => 'Pending',
         ]);
+        $beneficiary = Beneficiary::where('first_name', 'Jamie')->firstOrFail();
         $this->assertDatabaseHas('transaction_logs', [
-            'staff_name' => 'Maria Santos',
-            'action' => 'Beneficiaries imported',
-            'details' => '1 beneficiary records imported.',
+            'staff_name' => $user->name,
+            'action' => 'Beneficiary registered',
+            'subject_type' => 'Beneficiary',
+            'subject_id' => $beneficiary->id,
+            'details' => 'Imported from CSV.',
         ]);
     }
 
@@ -260,7 +309,6 @@ class ExampleTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->from(route('beneficiaries.index'))
             ->post(route('beneficiaries.import'), [
-                'staff_name' => 'Maria Santos',
                 'masterlist' => UploadedFile::fake()->createWithContent('masterlist.csv', $csv),
             ])
             ->assertRedirect(route('beneficiaries.index'))
@@ -292,6 +340,8 @@ class ExampleTest extends TestCase
             'staff_name' => 'Maria Santos',
             'action' => 'Program created',
             'details' => 'Emergency Assistance',
+            'subject_type' => 'Program',
+            'subject_id' => Program::where('program_name', 'Emergency Assistance')->value('id'),
         ]);
     }
 
@@ -311,7 +361,46 @@ class ExampleTest extends TestCase
         $this->assertDatabaseCount('transaction_logs', 0);
     }
 
-    public function test_program_beneficiary_assignment_records_staff_name(): void
+    public function test_program_update_and_delete_do_not_request_staff_name(): void
+    {
+        $program = Program::create([
+            'program_name' => 'Community Support',
+            'budget' => '1000.00',
+            'status' => 'Active',
+        ]);
+        $user = User::factory()->create(['name' => 'Maria Santos']);
+
+        $this->actingAs($user)
+            ->get(route('programs.edit', $program))
+            ->assertOk()
+            ->assertDontSee('Staff name');
+
+        $this->actingAs($user)
+            ->put(route('programs.update', $program), [
+                'program_name' => 'Community Support Updated',
+                'description' => 'Updated description',
+                'budget' => '1250.00',
+                'status' => 'Active',
+            ])
+            ->assertRedirect(route('programs.index'));
+
+        $this->actingAs($user)
+            ->delete(route('programs.destroy', $program))
+            ->assertRedirect(route('programs.index'));
+
+        $this->assertDatabaseHas('transaction_logs', [
+            'staff_name' => $user->name,
+            'action' => 'Program updated',
+            'subject_id' => $program->id,
+        ]);
+        $this->assertDatabaseHas('transaction_logs', [
+            'staff_name' => $user->name,
+            'action' => 'Program deleted',
+            'subject_id' => $program->id,
+        ]);
+    }
+
+    public function test_program_beneficiary_assignment_records_staff_name_per_payout(): void
     {
         $barangayId = DB::table('barangays')->insertGetId([
             'name' => 'Test Barangay',
@@ -340,6 +429,22 @@ class ExampleTest extends TestCase
             ->assertSee('Staff name');
 
         $this->actingAs($user)
+            ->get(route('programs.edit', $program))
+            ->assertOk()
+            ->assertDontSee('Staff name');
+
+        $this->actingAs($user)
+            ->from(route('programs.beneficiaries', $program))
+            ->post(route('programs.beneficiaries.assign', $program), [
+                'amount' => '250.00',
+                'beneficiary_ids' => [$beneficiary->id],
+            ])
+            ->assertRedirect(route('programs.beneficiaries', $program))
+            ->assertSessionHasErrors('staff_name');
+
+        $this->assertDatabaseCount('payouts', 0);
+
+        $this->actingAs($user)
             ->post(route('programs.beneficiaries.assign', $program), [
                 'staff_name' => 'Maria Santos',
                 'amount' => '250.00',
@@ -352,6 +457,31 @@ class ExampleTest extends TestCase
             'action' => 'Beneficiaries assigned to program',
             'subject_id' => $program->id,
         ]);
+
+        $payout = Payout::where('program_id', $program->id)->firstOrFail();
+        $this->assertDatabaseHas('transaction_logs', [
+            'staff_name' => 'Maria Santos',
+            'action' => 'Beneficiary assigned to program',
+            'subject_type' => 'Payout',
+            'subject_id' => $payout->id,
+        ]);
+        $this->actingAs($user)
+            ->get(route('programs.beneficiaries', $program))
+            ->assertSee('Assigned By')
+            ->assertSee('Maria Santos');
+
+        PayoutRelease::create([
+            'payout_id' => $payout->id,
+            'reference' => 'REL-TEST-LEGACY',
+            'amount' => '250.00',
+            'released_by' => $user->id,
+            'status' => 'Released',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('programs.beneficiaries', $program))
+            ->assertOk()
+            ->assertSee($user->name);
     }
 
     public function test_payout_release_requires_and_records_staff_name(): void
@@ -413,6 +543,12 @@ class ExampleTest extends TestCase
         $this->actingAs($user)
             ->get(route('payout-releases.index', $payout))
             ->assertOk()
+            ->assertSee('Maria Santos');
+
+        $this->actingAs($user)
+            ->get(route('programs.beneficiaries', $program))
+            ->assertOk()
+            ->assertSee('Released By')
             ->assertSee('Maria Santos');
     }
 

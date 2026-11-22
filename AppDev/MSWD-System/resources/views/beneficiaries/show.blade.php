@@ -40,6 +40,7 @@
             <div><span>Barangay</span><strong>{{ $beneficiary->barangay->name }}</strong></div>
             <div><span>Sector</span><strong>{{ $beneficiary->sector }}</strong></div>
             <div><span>Family Head</span><strong>{{ $beneficiary->is_familyhead ? 'Yes' : 'No' }}</strong></div>
+            <div><span>Registered By</span><strong>{{ $registrationStaffName ?: '—' }}</strong></div>
         </div>
     </section>
 
@@ -114,11 +115,6 @@
 
                 @csrf
                 @method('PATCH')
-
-                <label>
-                    Staff name
-                    <input name="staff_name" value="{{ old('staff_name') }}" maxlength="255" autocomplete="name" required>
-                </label>
 
                 {{-- Checklist: each item must be acknowledged before submitting. --}}
                 <div class="review-checklist-wrap">
