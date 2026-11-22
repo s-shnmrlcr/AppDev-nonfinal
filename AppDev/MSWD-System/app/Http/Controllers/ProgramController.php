@@ -9,6 +9,7 @@ use Illuminate\Validation\Rule;
 use App\Models\Beneficiary;
 use App\Models\Payout;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class ProgramController extends Controller
@@ -50,6 +51,24 @@ class ProgramController extends Controller
             'end_date' => ['nullable', 'date', 'after_or_equal:today'],
             'status' => ['required', 'in:Draft,Active'],
         ]);
+
+        $requiredColumns = collect(Schema::getColumns('programs'))
+            ->filter(fn (array $column) => ! $column['nullable'] && $column['default'] === null)
+            ->pluck('name')
+            ->all();
+
+        $legacyValues = [
+            'name' => $validated['program_name'],
+            'type' => 'Assistance',
+            'amount' => $validated['budget'],
+            'coverage' => $validated['description'] ?? 'Not specified',
+        ];
+
+        foreach ($legacyValues as $column => $value) {
+            if (in_array($column, $requiredColumns, true)) {
+                $validated[$column] = $value;
+            }
+        }
 
         Program::create($validated);
 

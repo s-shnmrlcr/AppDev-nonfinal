@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Program extends Model
 {
     protected $fillable = [
+        'name',
+        'type',
+        'amount',
+        'coverage',
         'program_name',
         'description',
         'budget',

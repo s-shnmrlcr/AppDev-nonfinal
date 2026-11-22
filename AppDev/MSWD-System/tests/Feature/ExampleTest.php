@@ -276,6 +276,26 @@ class ExampleTest extends TestCase
         $this->assertDatabaseCount('beneficiaries', 0);
     }
 
+    public function test_a_program_can_be_created_with_the_current_program_fields(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->post(route('programs.store'), [
+                'program_name' => 'Emergency Assistance',
+                'description' => 'Short-term support',
+                'budget' => '2500.00',
+                'start_date' => '2026-11-22',
+                'end_date' => '2026-12-22',
+                'status' => 'Active',
+            ])
+            ->assertRedirect(route('programs.index'))
+            ->assertSessionHas('status', 'Payout program created.');
+
+        $this->assertDatabaseHas('programs', [
+            'program_name' => 'Emergency Assistance',
+            'budget' => '2500.00',
+        ]);
+    }
+
     public function test_programs_can_be_created_and_payout_releases_export_csv(): void
     {
         $this->actingAs(User::factory()->create())

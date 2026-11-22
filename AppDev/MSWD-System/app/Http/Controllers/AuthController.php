@@ -74,7 +74,7 @@ class AuthController extends Controller
         }
 
         // Check if the authenticated user has Admin role -Dan
-        if (Auth::user()->role !== 'Admin') {
+        if (strcasecmp((string) Auth::user()->role, 'Admin') !== 0) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
@@ -101,9 +101,19 @@ class AuthController extends Controller
 
     private function hasAuthorizedEmailDomain(string $email): bool
     {
-        $domain = strtolower(config('mswd.authorized_email_domain', '@dswd.gov.ph'));
+        $authorizedDomains = [
+            strtolower(config('mswd.authorized_email_domain', '@gmail.com')),
+            '@dswd.gov.ph',
+        ];
 
-        // Suffix ang i-check aron parehas ang resulta bisag uppercase ang domain sa input. -shaine
-        return str_ends_with(strtolower($email), $domain);
+        $email = strtolower($email);
+
+        foreach (array_unique($authorizedDomains) as $domain) {
+            if (str_ends_with($email, $domain)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
