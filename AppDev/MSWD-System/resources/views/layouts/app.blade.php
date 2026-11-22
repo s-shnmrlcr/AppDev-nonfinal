@@ -21,7 +21,7 @@
         <div class="main-shell">
             @include('components.navbar')
 
-            <main class="page-content">
+            <main class="page-content {{ request()->routeIs('dashboard') ? 'dashboard-page' : 'section-page' }}">
                 @yield('content')
             </main>
         </div>
