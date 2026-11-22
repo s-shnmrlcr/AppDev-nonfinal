@@ -115,6 +115,11 @@
                 @csrf
                 @method('PATCH')
 
+                <label>
+                    Staff name
+                    <input name="staff_name" value="{{ old('staff_name') }}" maxlength="255" autocomplete="name" required>
+                </label>
+
                 {{-- Checklist: each item must be acknowledged before submitting. --}}
                 <div class="review-checklist-wrap">
                     <h4>Review Checklist</h4>

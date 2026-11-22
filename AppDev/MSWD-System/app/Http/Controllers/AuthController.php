@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,38 +13,6 @@ class AuthController extends Controller
     {
         return view('auth.login');
     }
-
-    public function showRegistration()
-    {
-        return view('auth.register');
-    }
-
-    public function register(Request $request): RedirectResponse
-    {
-        $request->merge([
-            'email' => strtolower(trim((string) $request->input('email'))),
-        ]);
-
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
-
-        if (! $this->hasAuthorizedEmailDomain($validated['email'])) {
-            throw ValidationException::withMessages([
-                'email' => 'Create an account using your authorized DSWD email address.',
-            ]);
-        }
-
-        // Human nga mag-sign in ang bag-ong user; ayaw dayon siya i-authenticate human sa registration. -shaine
-        User::create($validated);
-
-        return redirect()
-            ->route('login')
-            ->with('status', 'Your account has been created. Sign in to continue.');
-    }
-
 
     public function login(Request $request): RedirectResponse
     {
@@ -99,21 +66,4 @@ class AuthController extends Controller
         return redirect()->route('login');
     }
 
-    private function hasAuthorizedEmailDomain(string $email): bool
-    {
-        $authorizedDomains = [
-            strtolower(config('mswd.authorized_email_domain', '@gmail.com')),
-            '@dswd.gov.ph',
-        ];
-
-        $email = strtolower($email);
-
-        foreach (array_unique($authorizedDomains) as $domain) {
-            if (str_ends_with($email, $domain)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }

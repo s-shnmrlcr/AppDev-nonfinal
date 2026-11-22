@@ -14,6 +14,9 @@
     @if (session('status'))
         <div class="alert alert-success" role="status">{{ session('status') }}</div>
     @endif
+    @if ($errors->any())
+        <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
+    @endif
     <section class="card">
         <div class="table-scroll">
             <table class="data-table">
@@ -34,7 +37,7 @@
                                 <time datetime="{{ \Illuminate\Support\Carbon::parse($log->created_at)->utc()->toIso8601String() }}"
                                       data-local-datetime>{{ \Illuminate\Support\Carbon::parse($log->created_at)->format('M j, Y g:i A') }}</time>
                             </td>
-                            <td><strong>{{ $log->name }}</strong></td>
+                            <td><strong>{{ $log->staff_name ?? $log->account_name }}</strong></td>
                             <td>{{ $log->email }}</td>
                             <td>
                                 @if ($log->applicant_name)
@@ -52,6 +55,10 @@
                                           onsubmit="return confirm('Delete only this identity audit log and its saved images? The beneficiary record will not be changed.');">
                                         @csrf
                                         @method('DELETE')
+                                        <label>
+                                            Staff name
+                                            <input name="staff_name" maxlength="255" autocomplete="name" required>
+                                        </label>
                                         <button type="submit" class="button button-danger">Delete</button>
                                     </form>
                                 </div>
@@ -66,6 +73,48 @@
                                 <div class="empty-state table-empty-state">
                                     <strong>No identity reviews recorded</strong>
                                     <p>Recorded claimant identity decisions will appear here.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>Transaction History</h2>
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date / Time</th>
+                        <th>Staff name</th>
+                        <th>Account</th>
+                        <th>Action</th>
+                        <th>Record</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($transactionLogs as $transactionLog)
+                        <tr>
+                            <td>
+                                <time datetime="{{ $transactionLog->created_at->utc()->toIso8601String() }}"
+                                      data-local-datetime>{{ $transactionLog->created_at->format('M j, Y g:i A') }}</time>
+                            </td>
+                            <td><strong>{{ $transactionLog->staff_name }}</strong></td>
+                            <td>{{ $transactionLog->user?->email ?? '—' }}</td>
+                            <td>{{ $transactionLog->action }}</td>
+                            <td>{{ $transactionLog->subject_type }}{{ $transactionLog->subject_id ? ' #'.$transactionLog->subject_id : '' }}</td>
+                            <td>{{ $transactionLog->details ?? '—' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state table-empty-state">
+                                    <strong>No transactions recorded</strong>
+                                    <p>Transactions will appear here after staff submits them.</p>
                                 </div>
                             </td>
                         </tr>

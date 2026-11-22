@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Payout;
 use App\Models\PayoutRelease;
+use App\Models\TransactionLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 class PayoutReleaseController extends Controller
@@ -20,6 +20,14 @@ class PayoutReleaseController extends Controller
             'program',
             'releases',
         ]);
+
+        $releaseStaffNames = TransactionLog::query()
+            ->where('subject_type', 'PayoutRelease')
+            ->whereIn('subject_id', $payout->releases->modelKeys())
+            ->latest('id')
+            ->get(['subject_id', 'staff_name'])
+            ->unique('subject_id')
+            ->pluck('staff_name', 'subject_id');
 
         // Calculate the total amount successfully released
         $releasedTotal = $payout->releases
@@ -35,7 +43,8 @@ class PayoutReleaseController extends Controller
         return view('payout-releases.index', compact(
             'payout',
             'releasedTotal',
-            'remainingBalance'
+            'remainingBalance',
+            'releaseStaffNames'
         ));
 
     }
@@ -45,6 +54,7 @@ class PayoutReleaseController extends Controller
     {
         // Validate the release amount
         $validated = $request->validate([
+            'staff_name' => ['required', 'string', 'max:255'],
             'amount' => [
                 'required',
                 'numeric',
@@ -88,7 +98,7 @@ class PayoutReleaseController extends Controller
             } while (PayoutRelease::where('reference', $reference)->exists());
 
             // Create the release record
-            PayoutRelease::create([
+            $release = PayoutRelease::create([
                 'payout_id' => $lockedPayout->id,
                 'reference' => $reference,
                 'amount' => $releaseAmount,
@@ -110,6 +120,14 @@ class PayoutReleaseController extends Controller
             }
 
             $lockedPayout->save();
+
+            TransactionLog::record(
+                $validated['staff_name'],
+                'Payout release recorded',
+                'PayoutRelease',
+                $release->id,
+                $release->reference.' — '.number_format($releaseAmount, 2)
+            );
         });
 
         return redirect()

@@ -116,6 +116,20 @@
                     >
                 </div>
 
+                <div class="form-group">
+                    <label for="staff_name">Staff name</label>
+                    <input
+                        type="text"
+                        id="staff_name"
+                        name="staff_name"
+                        class="form-control"
+                        value="{{ old('staff_name') }}"
+                        maxlength="255"
+                        autocomplete="name"
+                        required
+                    >
+                </div>
+
                 <button type="submit" class="button button-primary">
                     Record Release
                 </button>
@@ -173,7 +187,7 @@
                                         : '—' }}
                                 </td>
 
-                                <td>{{ $release->released_by ?? '—' }}</td>
+                                <td>{{ $releaseStaffNames->get($release->id, '—') }}</td>
 
                                 <td>
                                     <x-status-badge :status="$release->status" />

@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Beneficiary;
+use App\Models\Payout;
 use App\Models\Program;
+use App\Models\TransactionLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use App\Models\Beneficiary;
-use App\Models\Payout;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -44,6 +45,7 @@ class ProgramController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'staff_name' => ['required', 'string', 'max:255'],
             'program_name' => ['required', 'string', 'max:255', 'unique:programs,program_name'],
             'description' => ['nullable', 'string'],
             'budget' => ['required', 'numeric', 'min:0.01', 'max:9999999999.99'],
@@ -51,6 +53,9 @@ class ProgramController extends Controller
             'end_date' => ['nullable', 'date', 'after_or_equal:today'],
             'status' => ['required', 'in:Draft,Active'],
         ]);
+
+        $staffName = $validated['staff_name'];
+        unset($validated['staff_name']);
 
         $requiredColumns = collect(Schema::getColumns('programs'))
             ->filter(fn (array $column) => ! $column['nullable'] && $column['default'] === null)
@@ -70,7 +75,19 @@ class ProgramController extends Controller
             }
         }
 
-        Program::create($validated);
+        $program = DB::transaction(function () use ($validated, $staffName): Program {
+            $program = Program::create($validated);
+
+            TransactionLog::record(
+                $staffName,
+                'Program created',
+                'Program',
+                $program->id,
+                $program->program_name
+            );
+
+            return $program;
+        });
 
         return redirect()
             ->route('programs.index')
@@ -80,6 +97,7 @@ class ProgramController extends Controller
     public function update(Request $request, Program $program): RedirectResponse
     {
         $validated = $request->validate([
+            'staff_name' => ['required', 'string', 'max:255'],
             'program_name' => [
                 'required',
                 'string',
@@ -93,15 +111,32 @@ class ProgramController extends Controller
             'status' => ['required', 'in:Draft,Active'],
         ]);
 
-        $program->update($validated);
+        $staffName = $validated['staff_name'];
+        unset($validated['staff_name']);
+
+        DB::transaction(function () use ($program, $validated, $staffName): void {
+            $program->update($validated);
+
+            TransactionLog::record(
+                $staffName,
+                'Program updated',
+                'Program',
+                $program->id,
+                $program->program_name
+            );
+        });
 
         return redirect()
             ->route('programs.index')
             ->with('status', 'Payout program updated.');
     }
 
-    public function destroy(Program $program): RedirectResponse
+    public function destroy(Request $request, Program $program): RedirectResponse
     {
+        $validated = $request->validate([
+            'staff_name' => ['required', 'string', 'max:255'],
+        ]);
+
         if ($program->payouts()->exists()) {
             return redirect()
                 ->route('programs.index')
@@ -110,7 +145,19 @@ class ProgramController extends Controller
                 ]);
         }
 
-        $program->delete();
+        DB::transaction(function () use ($program, $validated): void {
+            $name = $program->program_name;
+            $id = $program->id;
+            $program->delete();
+
+            TransactionLog::record(
+                $validated['staff_name'],
+                'Program deleted',
+                'Program',
+                $id,
+                $name
+            );
+        });
 
         return redirect()
             ->route('programs.index')
@@ -149,11 +196,13 @@ class ProgramController extends Controller
     {
         // Validate the fixed assistance amount and selected beneficiaries
         $validated = $request->validate([
+            'staff_name' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'beneficiary_ids' => ['required', 'array', 'min:1'],
             'beneficiary_ids.*' => ['required', 'integer', 'distinct', 'exists:beneficiaries,id'],
         ]);
 
+        $staffName = $validated['staff_name'];
         $beneficiaryIds = $validated['beneficiary_ids'];
         $amount = (float) $validated['amount'];
 
@@ -190,7 +239,7 @@ class ProgramController extends Controller
         }
 
         // Create all payout records together
-        DB::transaction(function () use ($program, $beneficiaryIds, $amount) {
+        DB::transaction(function () use ($program, $beneficiaryIds, $amount, $staffName) {
 
             foreach ($beneficiaryIds as $beneficiaryId) {
 
@@ -208,6 +257,14 @@ class ProgramController extends Controller
                     'released_at' => null,
                 ]);
             }
+
+            TransactionLog::record(
+                $staffName,
+                'Beneficiaries assigned to program',
+                'Program',
+                $program->id,
+                count($beneficiaryIds).' payout(s) created at '.number_format($amount, 2).' each.'
+            );
         });
 
         return redirect()

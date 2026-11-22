@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Beneficiary;
-use App\Models\FamilyHead;
+use App\Models\TransactionLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -73,6 +73,7 @@ class BeneficiaryController extends Controller
 
         // Validate the review form before updating the beneficiary.
         $validated = $request->validate([
+            'staff_name' => ['required', 'string', 'max:255'],
             // Allow only these three staff review decisions.
             'verification_status' => [
                 'required',
@@ -108,11 +109,20 @@ class BeneficiaryController extends Controller
             ]);
         }
 
-        // Save the selected review status to the beneficiaries table.
-        $beneficiary->update([
-            'verification_status' => $validated['verification_status'],
-            'review_remarks' => $validated['remarks'] ?? null,
-        ]);
+        DB::transaction(function () use ($beneficiary, $validated): void {
+            $beneficiary->update([
+                'verification_status' => $validated['verification_status'],
+                'review_remarks' => $validated['remarks'] ?? null,
+            ]);
+
+            TransactionLog::record(
+                $validated['staff_name'],
+                'Beneficiary verification reviewed',
+                'Beneficiary',
+                $beneficiary->id,
+                'Decision: '.$validated['verification_status']
+            );
+        });
 
         // Choose a user-friendly message based on the selected decision.
         $message = match ($validated['verification_status']) {
@@ -154,8 +164,12 @@ class BeneficiaryController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate($this->beneficiaryRules());
+        $validated = $request->validate($this->beneficiaryRules() + [
+            'staff_name' => ['required', 'string', 'max:255'],
+        ]);
 
+        $staffName = $validated['staff_name'];
+        unset($validated['staff_name']);
         $document = $validated['id_document'] ?? null;
         unset($validated['id_document']);
 
@@ -185,7 +199,8 @@ class BeneficiaryController extends Controller
         DB::transaction(function () use (
             &$beneficiaryData,
             $familyHeadData,
-            $document
+            $document,
+            $staffName
         ): void {
             if ($document !== null) {
                 $path = $document->store('beneficiary-ids', 'local');
@@ -204,6 +219,13 @@ class BeneficiaryController extends Controller
             if ($beneficiary->is_familyhead) {
                 $beneficiary->familyHead()->create($familyHeadData);
             }
+
+            TransactionLog::record(
+                $staffName,
+                'Beneficiary registered',
+                'Beneficiary',
+                $beneficiary->id
+            );
         });
 
         return redirect()
@@ -213,8 +235,12 @@ class BeneficiaryController extends Controller
 
     public function update(Request $request, Beneficiary $beneficiary): RedirectResponse
     {
-        $validated = $request->validate($this->beneficiaryRules());
+        $validated = $request->validate($this->beneficiaryRules() + [
+            'staff_name' => ['required', 'string', 'max:255'],
+        ]);
 
+        $staffName = $validated['staff_name'];
+        unset($validated['staff_name']);
         $document = $validated['id_document'] ?? null;
         unset($validated['id_document']);
 
@@ -237,7 +263,8 @@ class BeneficiaryController extends Controller
             $beneficiary,
             &$beneficiaryData,
             $familyHeadData,
-            $document
+            $document,
+            $staffName
         ): void {
             if ($document !== null) {
                 $path = $document->store('beneficiary-ids', 'local');
@@ -255,6 +282,13 @@ class BeneficiaryController extends Controller
             } else {
                 $beneficiary->familyHead()->delete();
             }
+
+            TransactionLog::record(
+                $staffName,
+                'Beneficiary updated',
+                'Beneficiary',
+                $beneficiary->id
+            );
         });
 
         if (
@@ -270,8 +304,12 @@ class BeneficiaryController extends Controller
             ->with('status', 'Beneficiary updated successfully.');
     }
 
-    public function destroy(Beneficiary $beneficiary): RedirectResponse
+    public function destroy(Request $request, Beneficiary $beneficiary): RedirectResponse
     {
+        $validated = $request->validate([
+            'staff_name' => ['required', 'string', 'max:255'],
+        ]);
+
         if (DB::table('payouts')->where('beneficiary_id', $beneficiary->id)->exists()) {
             return redirect()
                 ->route('beneficiaries.index')
@@ -281,7 +319,17 @@ class BeneficiaryController extends Controller
         }
 
         $documentPath = $beneficiary->id_document_path;
-        $beneficiary->delete();
+        DB::transaction(function () use ($beneficiary, $validated): void {
+            $id = $beneficiary->id;
+            $beneficiary->delete();
+
+            TransactionLog::record(
+                $validated['staff_name'],
+                'Beneficiary deleted',
+                'Beneficiary',
+                $id
+            );
+        });
 
         if (
             is_string($documentPath)
@@ -297,9 +345,11 @@ class BeneficiaryController extends Controller
 
     public function import(Request $request): RedirectResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'masterlist' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
+            'staff_name' => ['required', 'string', 'max:255'],
         ]);
+        $staffName = $validated['staff_name'];
 
         $handle = fopen($request->file('masterlist')->getRealPath(), 'r');
         if ($handle === false) {
@@ -391,10 +441,18 @@ class BeneficiaryController extends Controller
         }
 
         // Usa ka transaction aron kompleto ang import o walay ma-save kung mamali ang pagsulat. -shaine
-        DB::transaction(function () use ($rows): void {
+        DB::transaction(function () use ($rows, $staffName): void {
             foreach ($rows as $row) {
                 Beneficiary::create($row);
             }
+
+            TransactionLog::record(
+                $staffName,
+                'Beneficiaries imported',
+                'Beneficiary',
+                null,
+                count($rows).' beneficiary records imported.'
+            );
         });
 
         return redirect()

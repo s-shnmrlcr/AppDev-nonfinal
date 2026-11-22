@@ -39,6 +39,10 @@
                           onsubmit="return confirm('Are you sure you want to delete this payout program? This action cannot be undone.');">
                         @csrf
                         @method('DELETE')
+                        <label>
+                            Staff name
+                            <input name="staff_name" maxlength="255" autocomplete="name" required>
+                        </label>
                         <button type="submit" class="button button-danger">Delete</button>
                     </form>
                 </div>

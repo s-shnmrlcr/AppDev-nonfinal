@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Beneficiary;
+use App\Models\TransactionLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,7 @@ class VerificationController extends Controller
     {
         // Duha ra ka desisyon ang dawaton kay audit record kini sa manual nga visual review. -shaine
         $validated = $request->validate([
+            'staff_name' => ['required', 'string', 'max:255'],
             'beneficiary_id' => ['required', 'integer', 'exists:beneficiaries,id'],
             'decision' => ['required', 'in:matched,not_matched'],
             'captured_photo' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:10240'],
@@ -45,16 +47,33 @@ class VerificationController extends Controller
         }
 
         try {
-            DB::table('identity_verification_logs')->insert([
-                'user_id' => $request->user()->id,
-                'beneficiary_id' => $beneficiary->id,
-                'applicant_name' => $beneficiary->full_name,
-                'decision' => $validated['decision'],
-                'captured_photo_path' => $capturedPhotoPath,
-                'id_image_path' => $idImagePath,
-                'created_at' => $reviewedAt,
-                'updated_at' => $reviewedAt,
-            ]);
+            DB::transaction(function () use (
+                $request,
+                $beneficiary,
+                $validated,
+                $capturedPhotoPath,
+                $idImagePath,
+                $reviewedAt
+            ): void {
+                $logId = DB::table('identity_verification_logs')->insertGetId([
+                    'user_id' => $request->user()->id,
+                    'beneficiary_id' => $beneficiary->id,
+                    'applicant_name' => $beneficiary->full_name,
+                    'decision' => $validated['decision'],
+                    'captured_photo_path' => $capturedPhotoPath,
+                    'id_image_path' => $idImagePath,
+                    'created_at' => $reviewedAt,
+                    'updated_at' => $reviewedAt,
+                ]);
+
+                TransactionLog::record(
+                    $validated['staff_name'],
+                    'Identity review recorded',
+                    'IdentityVerificationLog',
+                    $logId,
+                    'Beneficiary #'.$beneficiary->id.' — '.$validated['decision']
+                );
+            });
         } catch (\Throwable $exception) {
             Storage::disk('local')->delete([$capturedPhotoPath, $idImagePath]);
             throw $exception;

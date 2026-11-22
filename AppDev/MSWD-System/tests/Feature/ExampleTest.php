@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
@@ -38,67 +39,13 @@ class ExampleTest extends TestCase
             ->assertSee('municipality-kabacan.png')
             ->assertSee('cotabato-province-seal.png')
             ->assertSee('dswd-bagong-pilipinas.png')
-            ->assertSee(route('register'));
+            ->assertDontSee('Create account');
     }
 
-    public function test_the_registration_page_renders(): void
+    public function test_account_registration_is_disabled(): void
     {
-        $this->get(route('register'))
-            ->assertOk()
-            ->assertSee('Create your account')
-            ->assertSee(route('register.store'));
-    }
-
-    public function test_authorized_staff_can_create_an_account(): void
-    {
-        $this->post(route('register.store'), [
-            'name' => 'Test Staff',
-            'email' => 'NEW.STAFF@DSWD.GOV.PH',
-            'password' => 'secure-password',
-            'password_confirmation' => 'secure-password',
-        ])->assertRedirect(route('login'))
-            ->assertSessionHas('status', 'Your account has been created. Sign in to continue.');
-
-        $this->assertDatabaseHas('users', [
-            'name' => 'Test Staff',
-            'email' => 'new.staff@dswd.gov.ph',
-        ]);
-
-        $user = User::where('email', 'new.staff@dswd.gov.ph')->firstOrFail();
-        $this->assertNotSame('secure-password', $user->getRawOriginal('password'));
-        $this->assertGuest();
-        $this->get(route('dashboard'))->assertRedirect(route('login'));
-
-        $this->post(route('login.submit'), [
-            'email' => 'new.staff@dswd.gov.ph',
-            'password' => 'secure-password',
-        ])->assertRedirect(route('dashboard'));
-
-        $this->assertAuthenticatedAs($user);
-        $this->get(route('dashboard'))->assertOk();
-    }
-
-    public function test_registration_requires_an_authorized_email_and_matching_passwords(): void
-    {
-        $this->from(route('register'))
-            ->post(route('register.store'), [
-                'name' => 'Outside User',
-                'email' => 'person@example.com',
-                'password' => 'secure-password',
-                'password_confirmation' => 'secure-password',
-            ])
-            ->assertRedirect(route('register'))
-            ->assertSessionHasErrors('email');
-
-        $this->from(route('register'))
-            ->post(route('register.store'), [
-                'name' => 'Test Staff',
-                'email' => 'staff@dswd.gov.ph',
-                'password' => 'secure-password',
-                'password_confirmation' => 'different-password',
-            ])
-            ->assertRedirect(route('register'))
-            ->assertSessionHasErrors('password');
+        $this->get('/register')->assertNotFound();
+        $this->post('/register')->assertNotFound();
 
         $this->assertDatabaseCount('users', 0);
     }
@@ -109,15 +56,17 @@ class ExampleTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
-    public function test_staff_can_sign_in_and_view_the_dashboard(): void
+    public function test_admin_can_sign_in_and_view_the_dashboard(): void
     {
         User::factory()->create([
-            'email' => 'staff@dswd.gov.ph',
+            'email' => 'admin@example.com',
+            'role' => 'Admin',
             'password' => 'prototype-password',
         ]);
+        config(['mswd.admin_email' => 'admin@example.com']);
 
         $this->post(route('login.submit'), [
-            'email' => 'staff@dswd.gov.ph',
+            'email' => 'admin@example.com',
             'password' => 'prototype-password',
         ])->assertRedirect(route('dashboard'));
 
@@ -166,23 +115,55 @@ class ExampleTest extends TestCase
     {
         $this->assertFalse(Schema::hasColumn('identity_verification_logs', 'claim_reference'));
         $user = User::factory()->create();
+        Storage::fake('local');
+        $barangayId = DB::table('barangays')->insertGetId([
+            'name' => 'Test Barangay',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $beneficiary = Beneficiary::create([
+            'first_name' => 'Jamie',
+            'last_name' => 'Rivera',
+            'date_of_birth' => '1990-04-12',
+            'sex' => 'Female',
+            'barangay_id' => $barangayId,
+            'sector' => 'General Beneficiary',
+        ]);
 
         $this->actingAs($user)
             ->post(route('verification.review'), [
                 'decision' => 'matched',
+                'staff_name' => 'Maria Santos',
+                'beneficiary_id' => $beneficiary->id,
+                'captured_photo' => UploadedFile::fake()->createWithContent(
+                    'capture.png',
+                    base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf5kAAAAASUVORK5CYII=')
+                ),
+                'id_image' => UploadedFile::fake()->createWithContent(
+                    'id.png',
+                    base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf5kAAAAASUVORK5CYII=')
+                ),
             ])
             ->assertRedirect(route('verification.index'))
             ->assertSessionHas('status');
 
         $this->assertDatabaseHas('identity_verification_logs', [
             'user_id' => $user->id,
+            'beneficiary_id' => $beneficiary->id,
             'decision' => 'matched',
+        ]);
+        $this->assertDatabaseHas('transaction_logs', [
+            'user_id' => $user->id,
+            'staff_name' => 'Maria Santos',
+            'action' => 'Identity review recorded',
         ]);
 
         $this->get(route('audit-logs.index'))
             ->assertOk()
             ->assertDontSee('Claim Reference')
-            ->assertSee('Identity matches');
+            ->assertSee('Identity matches')
+            ->assertSee('Maria Santos')
+            ->assertSee('Transaction History');
     }
 
     public function test_identity_decision_must_be_valid_before_it_is_logged(): void
@@ -191,6 +172,7 @@ class ExampleTest extends TestCase
             ->from(route('verification.index'))
             ->post(route('verification.review'), [
                 'decision' => 'automatic_face_match',
+                'staff_name' => 'Maria Santos',
             ])
             ->assertRedirect(route('verification.index'))
             ->assertSessionHasErrors('decision');
@@ -209,12 +191,13 @@ class ExampleTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->post(route('beneficiaries.store'), [
                 'first_name' => 'Jamie',
+                'staff_name' => 'Maria Santos',
                 'last_name' => 'Rivera',
                 'date_of_birth' => '1990-04-12',
                 'sex' => 'Female',
                 'barangay_id' => $barangayId,
                 'sector' => 'General Beneficiary',
-                'dependents' => 2,
+                'is_familyhead' => 0,
             ])
             ->assertRedirect(route('beneficiaries.index'));
 
@@ -222,7 +205,10 @@ class ExampleTest extends TestCase
             'first_name' => 'Jamie',
             'last_name' => 'Rivera',
             'verification_status' => 'Pending',
-            'payout_status' => 'Pending',
+        ]);
+        $this->assertDatabaseHas('transaction_logs', [
+            'staff_name' => 'Maria Santos',
+            'action' => 'Beneficiary registered',
         ]);
 
         $response = $this->actingAs(User::factory()->create())
@@ -240,10 +226,11 @@ class ExampleTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        $csv = "first_name,last_name,date_of_birth,sex,barangay,sector\nJamie,Rivera,1990-04-12,Female,Test Barangay,General Beneficiary\n";
+        $csv = "first_name,last_name,date_of_birth,sex,barangay,sector,is_familyhead\nJamie,Rivera,1990-04-12,Female,Test Barangay,General Beneficiary,0\n";
 
         $this->actingAs(User::factory()->create())
             ->post(route('beneficiaries.import'), [
+                'staff_name' => 'Maria Santos',
                 'masterlist' => UploadedFile::fake()->createWithContent('masterlist.csv', $csv),
             ])
             ->assertRedirect(route('beneficiaries.index'))
@@ -254,6 +241,11 @@ class ExampleTest extends TestCase
             'last_name' => 'Rivera',
             'verification_status' => 'Pending',
         ]);
+        $this->assertDatabaseHas('transaction_logs', [
+            'staff_name' => 'Maria Santos',
+            'action' => 'Beneficiaries imported',
+            'details' => '1 beneficiary records imported.',
+        ]);
     }
 
     public function test_invalid_beneficiary_csv_does_not_partially_import_records(): void
@@ -263,11 +255,12 @@ class ExampleTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        $csv = "first_name,last_name,date_of_birth,sex,barangay,sector\nJamie,Rivera,1990-04-12,Female,Test Barangay,General Beneficiary\nAlex,Lee,not-a-date,Female,Unknown Barangay,General Beneficiary\n";
+        $csv = "first_name,last_name,date_of_birth,sex,barangay,sector,is_familyhead\nJamie,Rivera,1990-04-12,Female,Test Barangay,General Beneficiary,0\nAlex,Lee,not-a-date,Female,Unknown Barangay,General Beneficiary,0\n";
 
         $this->actingAs(User::factory()->create())
             ->from(route('beneficiaries.index'))
             ->post(route('beneficiaries.import'), [
+                'staff_name' => 'Maria Santos',
                 'masterlist' => UploadedFile::fake()->createWithContent('masterlist.csv', $csv),
             ])
             ->assertRedirect(route('beneficiaries.index'))
@@ -280,6 +273,7 @@ class ExampleTest extends TestCase
     {
         $this->actingAs(User::factory()->create())
             ->post(route('programs.store'), [
+                'staff_name' => 'Maria Santos',
                 'program_name' => 'Emergency Assistance',
                 'description' => 'Short-term support',
                 'budget' => '2500.00',
@@ -294,23 +288,149 @@ class ExampleTest extends TestCase
             'program_name' => 'Emergency Assistance',
             'budget' => '2500.00',
         ]);
+        $this->assertDatabaseHas('transaction_logs', [
+            'staff_name' => 'Maria Santos',
+            'action' => 'Program created',
+            'details' => 'Emergency Assistance',
+        ]);
+    }
+
+    public function test_program_creation_requires_staff_name(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->from(route('programs.create'))
+            ->post(route('programs.store'), [
+                'program_name' => 'Emergency Assistance',
+                'budget' => '2500.00',
+                'status' => 'Active',
+            ])
+            ->assertRedirect(route('programs.create'))
+            ->assertSessionHasErrors('staff_name');
+
+        $this->assertDatabaseCount('programs', 0);
+        $this->assertDatabaseCount('transaction_logs', 0);
+    }
+
+    public function test_program_beneficiary_assignment_records_staff_name(): void
+    {
+        $barangayId = DB::table('barangays')->insertGetId([
+            'name' => 'Test Barangay',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $beneficiary = Beneficiary::create([
+            'first_name' => 'Jamie',
+            'last_name' => 'Rivera',
+            'date_of_birth' => '1990-04-12',
+            'sex' => 'Female',
+            'barangay_id' => $barangayId,
+            'sector' => 'General Beneficiary',
+            'verification_status' => 'Verified',
+        ]);
+        $program = Program::create([
+            'program_name' => 'Community Support',
+            'budget' => '1000.00',
+            'status' => 'Active',
+        ]);
+
+        $user = User::factory()->create();
+        $this->actingAs($user)
+            ->get(route('programs.beneficiaries', $program))
+            ->assertOk()
+            ->assertSee('Staff name');
+
+        $this->actingAs($user)
+            ->post(route('programs.beneficiaries.assign', $program), [
+                'staff_name' => 'Maria Santos',
+                'amount' => '250.00',
+                'beneficiary_ids' => [$beneficiary->id],
+            ])
+            ->assertRedirect(route('programs.beneficiaries', $program));
+
+        $this->assertDatabaseHas('transaction_logs', [
+            'staff_name' => 'Maria Santos',
+            'action' => 'Beneficiaries assigned to program',
+            'subject_id' => $program->id,
+        ]);
+    }
+
+    public function test_payout_release_requires_and_records_staff_name(): void
+    {
+        $barangayId = DB::table('barangays')->insertGetId([
+            'name' => 'Test Barangay',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $beneficiary = Beneficiary::create([
+            'first_name' => 'Jamie',
+            'last_name' => 'Rivera',
+            'date_of_birth' => '1990-04-12',
+            'sex' => 'Female',
+            'barangay_id' => $barangayId,
+            'sector' => 'General Beneficiary',
+        ]);
+        $program = Program::create([
+            'program_name' => 'Community Support',
+            'budget' => '1000.00',
+            'status' => 'Active',
+        ]);
+        $payout = Payout::create([
+            'reference' => 'PAY-TEST-STAFF',
+            'beneficiary_id' => $beneficiary->id,
+            'program_id' => $program->id,
+            'amount' => '250.00',
+            'status' => 'Pending',
+        ]);
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('payout-releases.index', $payout))
+            ->assertOk()
+            ->assertSee('Staff name');
+
+        $this->actingAs($user)
+            ->from(route('payout-releases.index', $payout))
+            ->post(route('payout-releases.store', $payout), [
+                'amount' => '250.00',
+            ])
+            ->assertSessionHasErrors('staff_name');
+
+        $this->assertDatabaseCount('payout_releases', 0);
+
+        $this->actingAs($user)
+            ->post(route('payout-releases.store', $payout), [
+                'staff_name' => 'Maria Santos',
+                'amount' => '250.00',
+            ])
+            ->assertRedirect(route('payout-releases.index', $payout));
+
+        $this->assertDatabaseHas('transaction_logs', [
+            'user_id' => $user->id,
+            'staff_name' => 'Maria Santos',
+            'action' => 'Payout release recorded',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('payout-releases.index', $payout))
+            ->assertOk()
+            ->assertSee('Maria Santos');
     }
 
     public function test_programs_can_be_created_and_payout_releases_export_csv(): void
     {
         $this->actingAs(User::factory()->create())
             ->post(route('programs.store'), [
-                'name' => 'Community Support',
-                'type' => 'Financial Assistance',
-                'amount' => '2500.00',
-                'coverage' => 'All barangays',
+                'staff_name' => 'Maria Santos',
+                'program_name' => 'Community Support',
+                'description' => 'All barangays',
+                'budget' => '2500.00',
                 'status' => 'Active',
             ])
             ->assertRedirect(route('programs.index'));
 
         $this->assertDatabaseHas('programs', [
-            'name' => 'Community Support',
-            'amount' => '2500.00',
+            'program_name' => 'Community Support',
+            'budget' => '2500.00',
             'status' => 'Active',
         ]);
 
@@ -327,7 +447,7 @@ class ExampleTest extends TestCase
             'barangay_id' => $barangayId,
             'sector' => 'General Beneficiary',
         ]);
-        $program = Program::where('name', 'Community Support')->firstOrFail();
+        $program = Program::where('program_name', 'Community Support')->firstOrFail();
         Payout::create([
             'reference' => 'PAY-TEST-001',
             'beneficiary_id' => $beneficiary->id,

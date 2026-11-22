@@ -92,9 +92,7 @@
                 <button class="button button-primary button-full">Sign in</button>
             </form>
 
-            {{-- Bulag nga footer sa form aron dali makita ang registration ug security reminder. -shaine --}}
             <div class="auth-card-footer">
-                <p class="muted">Need an account? <a href="{{ route('register') }}" class="text-link">Create account</a></p>
                 <span class="auth-footnote"><span aria-hidden="true">●</span> Authorized personnel only</span>
             </div>
         </div>

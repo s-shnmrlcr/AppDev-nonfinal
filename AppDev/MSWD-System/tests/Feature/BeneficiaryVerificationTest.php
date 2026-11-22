@@ -23,7 +23,7 @@ class BeneficiaryVerificationTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->get(route('beneficiaries.index'))
             ->assertOk()
-            ->assertSee('View/Action')
+            ->assertSee('Action')
             ->assertSee(route('beneficiaries.show', $beneficiary));
 
         $this->actingAs(User::factory()->create())
@@ -48,7 +48,11 @@ class BeneficiaryVerificationTest extends TestCase
 
         $this->actingAs(User::factory()->create())
             ->patch(route('beneficiaries.update-verification', $beneficiary), [
+                'staff_name' => 'Maria Santos',
                 'verification_status' => 'Verified',
+                'personal_info_checked' => '1',
+                'address_checked' => '1',
+                'classification_checked' => '1',
                 'documents_checked' => '1',
             ])
             ->assertRedirect(route('beneficiaries.show', $beneficiary));
@@ -56,6 +60,11 @@ class BeneficiaryVerificationTest extends TestCase
         $this->assertDatabaseHas('beneficiaries', [
             'id' => $beneficiary->id,
             'verification_status' => 'Verified',
+        ]);
+        $this->assertDatabaseHas('transaction_logs', [
+            'staff_name' => 'Maria Santos',
+            'action' => 'Beneficiary verification reviewed',
+            'subject_id' => $beneficiary->id,
         ]);
 
         $this->get(route('beneficiaries.index'))
@@ -77,14 +86,22 @@ class BeneficiaryVerificationTest extends TestCase
 
         $this->actingAs(User::factory()->create())
             ->patch(route('beneficiaries.update-verification', $beneficiary), [
+                'staff_name' => 'Maria Santos',
                 'verification_status' => 'Pending',
+                'personal_info_checked' => '1',
+                'address_checked' => '1',
+                'classification_checked' => '1',
                 'documents_checked' => '1',
             ])
-            ->assertSessionHasErrors('verification_status');
+            ->assertStatus(409);
 
         $this->actingAs(User::factory()->create())
             ->patch(route('beneficiaries.update-verification', $beneficiary), [
+                'staff_name' => 'Maria Santos',
                 'verification_status' => 'Verified',
+                'personal_info_checked' => '1',
+                'address_checked' => '1',
+                'classification_checked' => '1',
                 'documents_checked' => '1',
             ])
             ->assertStatus(409);
@@ -105,7 +122,11 @@ class BeneficiaryVerificationTest extends TestCase
         $this->actingAs($user)
             ->from(route('beneficiaries.show', $beneficiary))
             ->patch(route('beneficiaries.update-verification', $beneficiary), [
+                'staff_name' => 'Maria Santos',
                 'verification_status' => 'Verified',
+                'personal_info_checked' => '1',
+                'address_checked' => '1',
+                'classification_checked' => '1',
             ])
             ->assertSessionHasErrors('documents_checked');
 
@@ -114,7 +135,11 @@ class BeneficiaryVerificationTest extends TestCase
         $this->actingAs($user)
             ->from(route('beneficiaries.show', $beneficiary))
             ->patch(route('beneficiaries.update-verification', $beneficiary), [
+                'staff_name' => 'Maria Santos',
                 'verification_status' => 'Verified',
+                'personal_info_checked' => '1',
+                'address_checked' => '1',
+                'classification_checked' => '1',
                 'documents_checked' => '1',
             ])
             ->assertSessionHasErrors('documents_checked');
@@ -123,6 +148,30 @@ class BeneficiaryVerificationTest extends TestCase
             'id' => $beneficiary->id,
             'verification_status' => 'Pending',
         ]);
+    }
+
+    public function test_verification_requires_a_staff_name_before_updating(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('beneficiary-ids/id.pdf', 'verified test document');
+        $beneficiary = $this->createBeneficiary('beneficiary-ids/id.pdf');
+
+        $this->actingAs(User::factory()->create())
+            ->from(route('beneficiaries.show', $beneficiary))
+            ->patch(route('beneficiaries.update-verification', $beneficiary), [
+                'verification_status' => 'Verified',
+                'personal_info_checked' => '1',
+                'address_checked' => '1',
+                'classification_checked' => '1',
+                'documents_checked' => '1',
+            ])
+            ->assertSessionHasErrors('staff_name');
+
+        $this->assertDatabaseHas('beneficiaries', [
+            'id' => $beneficiary->id,
+            'verification_status' => 'Pending',
+        ]);
+        $this->assertDatabaseCount('transaction_logs', 0);
     }
 
     // EN: Create one reusable Pending beneficiary for feature tests; TL: Gumawa ng reusable na Pending beneficiary para sa tests; Bisaya: Maghimo og reusable nga Pending beneficiary para sa mga test. -shaine

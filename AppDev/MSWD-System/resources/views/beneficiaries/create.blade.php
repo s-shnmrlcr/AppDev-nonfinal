@@ -433,6 +433,20 @@
             </div>
         </section>
 
+        <section class="card form-section">
+            <div class="section-heading">
+                <h3>Transaction Staff</h3>
+                <p>Enter the name of the staff member recording this beneficiary change.</p>
+            </div>
+            <label>
+                Staff name
+                <input name="staff_name" value="{{ old('staff_name') }}" maxlength="255" autocomplete="name" required>
+                @error('staff_name')
+                    <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </label>
+        </section>
+
         <div class="form-actions">
             <a href="{{ route('beneficiaries.index') }}"
                class="button button-secondary">

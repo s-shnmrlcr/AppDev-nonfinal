@@ -77,6 +77,10 @@
             <input type="hidden" name="decision" id="reviewDecision" value="">
             <input type="file" name="captured_photo" id="capturedPhotoUpload" hidden>
             <input type="file" name="id_image" id="idImageUpload" hidden>
+            <label for="staff_name">
+                Staff name
+                <input type="text" id="staff_name" name="staff_name" value="{{ old('staff_name') }}" maxlength="255" autocomplete="name" required>
+            </label>
             <label class="claimant-select-label" for="beneficiaryId">
                 Applicant
                 <select name="beneficiary_id" id="beneficiaryId" required>

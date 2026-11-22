@@ -75,6 +75,11 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="staff_name">Staff name</label>
+                    <input id="staff_name" name="staff_name" value="{{ old('staff_name') }}" maxlength="255" autocomplete="name" required>
+                </div>
+
+                <div class="form-group">
                     <label>Select Beneficiaries</label>
 
                     @foreach ($availableBeneficiaries as $beneficiary)
