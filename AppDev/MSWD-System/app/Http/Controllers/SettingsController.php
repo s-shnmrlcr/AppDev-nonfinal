@@ -1,4 +1,5 @@
 <?php
+// -shaine: Provides the portal's organization and payout settings view.
 
 namespace App\Http\Controllers;
 
@@ -6,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class SettingsController extends Controller
 {
+    // -shaine: Builds the read-only organization and payout settings summary.
     public function index()
     {
         $settings = [

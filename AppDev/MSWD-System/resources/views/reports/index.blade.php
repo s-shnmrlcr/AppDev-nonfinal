@@ -1,3 +1,4 @@
+{{-- -shaine: Summarizes beneficiary, verification, payout, and barangay reports. --}}
 @extends('layouts.app')
 @section('title', 'Reports | MSWDO Kabacan')
 @section('page-title', 'Reports')

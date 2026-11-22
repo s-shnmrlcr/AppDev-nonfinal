@@ -1,3 +1,4 @@
+{{-- -shaine: Wraps authenticated pages with shared navigation and route-scoped styling. --}}
 <!DOCTYPE html>
 <html lang="en">
 

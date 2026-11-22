@@ -1,4 +1,5 @@
 <?php
+// -shaine: Defines application identity, locale, timezone, and core options.
 
 return [
 

@@ -1,4 +1,5 @@
 <?php
+// -shaine: Maps authentication and staff workflows to their HTTP controllers.
 
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\AuthController;
@@ -19,6 +20,7 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// -shaine: Keeps all operational pages and records behind staff authentication.
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

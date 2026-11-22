@@ -1,4 +1,5 @@
 <?php
+// -shaine: Builds live dashboard metrics, charts, and recent activity.
 
 namespace App\Http\Controllers;
 
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    // -shaine: Aggregates live beneficiary, payout, barangay, and activity data.
     public function index()
     {
         $beneficiaryStatusCounts = Beneficiary::query()
@@ -22,6 +24,7 @@ class DashboardController extends Controller
             ->pluck('total', 'status')
             ->all();
 
+        // -shaine: Scales each status bar against the largest count in its chart.
         $buildStatusChart = static function (array $slices): array {
             $total = array_sum(array_column($slices, 'count'));
             $maxCount = max(array_column($slices, 'count') ?: [0]);
@@ -51,6 +54,7 @@ class DashboardController extends Controller
             ];
         }
 
+        // -shaine: Preserve unexpected database statuses with a neutral fallback color.
         foreach ($beneficiaryStatusCounts as $status => $count) {
             if (array_key_exists($status, $beneficiaryStatusColors)) {
                 continue;
@@ -79,6 +83,7 @@ class DashboardController extends Controller
             ];
         }
 
+        // -shaine: Preserve unexpected payout statuses with a neutral fallback color.
         foreach ($payoutStatusCounts as $status => $count) {
             if (array_key_exists($status, $payoutStatusColors)) {
                 continue;
@@ -105,6 +110,7 @@ class DashboardController extends Controller
             ->filter(fn (object $barangay) => (int) $barangay->total > 0)
             ->values();
         $maxBarangayCount = (int) ($barangayCounts->max('total') ?? 0);
+        // -shaine: Expresses each barangay count relative to the busiest barangay.
         $barangayCounts->transform(function (object $barangay) use ($maxBarangayCount) {
             $barangay->percentage = $maxBarangayCount > 0
                 ? (int) round((int) $barangay->total / $maxBarangayCount * 100)

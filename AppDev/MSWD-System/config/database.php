@@ -1,4 +1,5 @@
 <?php
+// -shaine: Defines database connections, migrations, and query settings.
 
 use Illuminate\Support\Str;
 use Pdo\Mysql;

@@ -1,4 +1,5 @@
 <?php
+// -shaine: Registers application-wide services and boot behavior.
 
 namespace App\Providers;
 
@@ -6,17 +7,13 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
+    /** -shaine: Registers application services in Laravel's dependency container. */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
+    /** -shaine: Applies application-wide behavior after service registration. */
     public function boot(): void
     {
         //

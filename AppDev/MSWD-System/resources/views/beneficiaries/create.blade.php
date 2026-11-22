@@ -1,3 +1,4 @@
+{{-- -shaine: Captures beneficiary identity, household, address, and document details. --}}
 @extends('layouts.app')
 @php($isEditing = isset($beneficiary))
 @section('title', ($isEditing ? 'Edit' : 'Add').' Beneficiary | MSWDO Kabacan')
@@ -462,16 +463,19 @@
     </form>
 
     <script>
+        // -shaine: Initializes conditional beneficiary fields after the form is rendered.
         document.addEventListener('DOMContentLoaded', function () {
             const familyHeadSelect = document.getElementById('is_familyhead');
             const familyHeadSection = document.getElementById('family-head-section');
             const familyHeadFields = familyHeadSection.querySelectorAll('[data-family-required]');
 
+            // -shaine: Requires and enables household fields only for family-head records.
             function toggleFamilyHeadFields() {
                 const isFamilyHead = familyHeadSelect.value === '1';
 
                 familyHeadSection.hidden = !isFamilyHead;
 
+                // -shaine: Keeps hidden conditional fields out of browser validation and submission.
                 familyHeadFields.forEach(function (field) {
                     field.required = isFamilyHead;
                     field.disabled = !isFamilyHead;
@@ -486,6 +490,7 @@
             const otherSectorContainer = document.getElementById('other-sector-container');
             const otherSectorInput = document.getElementById('other_sector');
 
+            // -shaine: Requires the custom sector value only when Other is selected.
             function toggleOtherSector() {
                 const isOther = sectorSelect.value === 'Other';
 

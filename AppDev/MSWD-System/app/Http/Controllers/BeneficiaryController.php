@@ -1,4 +1,5 @@
 <?php
+// -shaine: Handles beneficiary records, verification, and CSV workflows.
 
 namespace App\Http\Controllers;
 
@@ -15,6 +16,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BeneficiaryController extends Controller
 {
+    // -shaine: Returns beneficiary rows and the barangay filter options.
     public function index()
     {
         $beneficiaries = Beneficiary::query()
@@ -44,6 +46,7 @@ class BeneficiaryController extends Controller
         return view('beneficiaries.index', compact('beneficiaries', 'barangays'));
     }
 
+    // -shaine: Loads the selected beneficiary and staff registration attribution.
     public function show(Beneficiary $beneficiary)
     {
         // EN: Load related records for the complete review page; TL: I-load ang kaugnay na records para sa buong detalye; Bisaya: I-load ang mga kauban nga record para kompleto ang detalye. -shaine
@@ -62,6 +65,7 @@ class BeneficiaryController extends Controller
         ));
     }
 
+    // -shaine: Serves an existing ID document from the restricted local disk.
     public function document(Beneficiary $beneficiary)
     {
         // EN: Only serve an existing ID in the beneficiary ID folder; TL: Ihatid lang ang ID na nasa tamang folder at umiiral; Bisaya: Ipakita lang ang ID nga anaa sa hustong folder ug anaa gyud. -shaine
@@ -71,6 +75,7 @@ class BeneficiaryController extends Controller
         return response()->file(Storage::disk('local')->path($beneficiary->id_document_path));
     }
 
+    // -shaine: Validates and records a staff decision on an eligible review.
     public function updateVerification( Request $request, Beneficiary $beneficiary): RedirectResponse
     {
         // Allow initial reviews and re-reviews after requested corrections.
@@ -117,6 +122,7 @@ class BeneficiaryController extends Controller
             ]);
         }
 
+        // -shaine: Save the review decision and its audit event together.
         DB::transaction(function () use ($request, $beneficiary, $validated): void {
             $beneficiary->update([
                 'verification_status' => $validated['verification_status'],
@@ -145,6 +151,7 @@ class BeneficiaryController extends Controller
             ->with('status', $message);
     }
 
+    // -shaine: Confirms the beneficiary ID file is in its expected private folder.
     private function hasAvailableIdDocument(Beneficiary $beneficiary): bool
     {
         $path = $beneficiary->id_document_path;
@@ -155,6 +162,7 @@ class BeneficiaryController extends Controller
             && Storage::disk('local')->exists($path);
     }
 
+    // -shaine: Loads barangay options for a new beneficiary form.
     public function create()
     {
         $barangays = DB::table('barangays')->orderBy('name')->get(['id', 'name']);
@@ -162,6 +170,7 @@ class BeneficiaryController extends Controller
         return view('beneficiaries.create', compact('barangays'));
     }
 
+    // -shaine: Loads the beneficiary and form options for editing.
     public function edit(Beneficiary $beneficiary)
     {
         $beneficiary->load(['barangay', 'familyHead']);
@@ -170,6 +179,7 @@ class BeneficiaryController extends Controller
         return view('beneficiaries.create', compact('beneficiary', 'barangays'));
     }
 
+    // -shaine: Validates and atomically creates a beneficiary and related records.
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate($this->beneficiaryRules() + [
@@ -204,6 +214,7 @@ class BeneficiaryController extends Controller
             array_flip($familyHeadFields)
         );
 
+        // -shaine: Save the beneficiary, optional household data, file path, and audit entry atomically.
         DB::transaction(function () use (
             &$beneficiaryData,
             $familyHeadData,
@@ -241,6 +252,7 @@ class BeneficiaryController extends Controller
             ->with('status', 'Beneficiary registered successfully.');
     }
 
+    // -shaine: Updates beneficiary details and safely replaces related data and files.
     public function update(Request $request, Beneficiary $beneficiary): RedirectResponse
     {
         $validated = $request->validate($this->beneficiaryRules());
@@ -263,6 +275,7 @@ class BeneficiaryController extends Controller
         $beneficiaryData = array_diff_key($validated, array_flip($familyHeadFields));
         $previousDocumentPath = $beneficiary->id_document_path;
 
+        // -shaine: Keep record updates and audit history consistent if any database write fails.
         DB::transaction(function () use (
             $beneficiary,
             &$beneficiaryData,
@@ -308,6 +321,7 @@ class BeneficiaryController extends Controller
             ->with('status', 'Beneficiary updated successfully.');
     }
 
+    // -shaine: Prevents unsafe deletion and records removal of an eligible beneficiary.
     public function destroy(Request $request, Beneficiary $beneficiary): RedirectResponse
     {
         if (DB::table('payouts')->where('beneficiary_id', $beneficiary->id)->exists()) {
@@ -319,6 +333,7 @@ class BeneficiaryController extends Controller
         }
 
         $documentPath = $beneficiary->id_document_path;
+        // -shaine: Delete the record and write its audit entry as one atomic database operation.
         DB::transaction(function () use ($request, $beneficiary): void {
             $id = $beneficiary->id;
             $beneficiary->delete();
@@ -343,6 +358,7 @@ class BeneficiaryController extends Controller
             ->with('status', 'Beneficiary deleted successfully.');
     }
 
+    // -shaine: Validates the full CSV before atomically importing beneficiary rows.
     public function import(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -360,7 +376,7 @@ class BeneficiaryController extends Controller
             fclose($handle);
             throw ValidationException::withMessages(['masterlist' => 'The CSV file is empty.']);
         }
-        // Tangtanga ang UTF-8 BOM kay usahay maapil ni sa unang column name sa gi-export nga CSV. -shaine
+        // -shaine: Remove a UTF-8 BOM so it does not corrupt the first CSV header name.
         $headers[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string) $headers[0]);
         $headers = array_map(fn ($header) => strtolower(trim((string) $header)), $headers);
         $requiredHeaders = ['first_name', 'last_name', 'date_of_birth', 'sex', 'barangay', 'sector'];
@@ -439,7 +455,7 @@ class BeneficiaryController extends Controller
             throw ValidationException::withMessages(['masterlist' => 'The CSV contains no beneficiary records.']);
         }
 
-        // Usa ka transaction aron kompleto ang import o walay ma-save kung mamali ang pagsulat. -shaine
+        // -shaine: Keep imported beneficiary records and their audit entries all-or-nothing.
         DB::transaction(function () use ($rows, $staffName): void {
             foreach ($rows as $row) {
                 $beneficiary = Beneficiary::create($row);
@@ -459,10 +475,12 @@ class BeneficiaryController extends Controller
             ->with('status', count($rows).' beneficiaries imported.');
     }
 
+    // -shaine: Streams beneficiary data as a spreadsheet-safe CSV export.
     public function export(): StreamedResponse
     {
         $beneficiaries = Beneficiary::query()->with('barangay')->orderBy('id')->get();
 
+        // -shaine: Writes the response incrementally to avoid building a second CSV copy in memory.
         return response()->streamDownload(function () use ($beneficiaries): void {
             $output = fopen('php://output', 'w');
 
@@ -493,6 +511,7 @@ class BeneficiaryController extends Controller
         }, 'beneficiaries.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
+    // -shaine: Shares server-side validation rules between forms and CSV import.
     private function beneficiaryRules(bool $includeDocument = true): array
     {
         $rules = [
@@ -580,6 +599,7 @@ class BeneficiaryController extends Controller
         return $rules;
     }
 
+    // -shaine: Defines the stable column order used by beneficiary CSV exports.
     private function csvHeaders(): array
     {
         return [
@@ -598,6 +618,7 @@ class BeneficiaryController extends Controller
         ];
     }
 
+    // -shaine: Escapes formula-like text before it is opened in spreadsheet software.
     private function safeCsvValue(mixed $value): mixed {
 
         // Butangi og apostrophe ang formula-like nga text aron dili ma-execute sa spreadsheet. -shaine

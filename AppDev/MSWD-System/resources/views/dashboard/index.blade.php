@@ -1,3 +1,4 @@
+{{-- -shaine: Presents live dashboard metrics, charts, barangay summaries, and activity. --}}
 @extends('layouts.app')
 
 @section('title', 'Dashboard | MSWDO Kabacan')

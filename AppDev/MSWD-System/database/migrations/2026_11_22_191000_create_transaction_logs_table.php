@@ -1,4 +1,5 @@
 <?php
+// -shaine: Defines transaction audit entries and staff attribution.
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -6,6 +7,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    // -shaine: Creates staff-attributed transaction audit storage.
     public function up(): void
     {
         Schema::create('transaction_logs', function (Blueprint $table) {
@@ -22,6 +24,7 @@ return new class extends Migration
         });
     }
 
+    // -shaine: Removes transaction audit records when rolling back.
     public function down(): void
     {
         Schema::dropIfExists('transaction_logs');

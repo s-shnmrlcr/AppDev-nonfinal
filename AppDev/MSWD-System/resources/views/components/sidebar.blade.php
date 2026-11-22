@@ -1,3 +1,4 @@
+{{-- -shaine: Renders the shared navigation sidebar and workspace identity. --}}
 <aside class="sidebar" id="sidebar">
     <div class="brand">
         <img class="brand-logo" src="{{ asset('images/branding/municipality-kabacan.png') }}" alt="">

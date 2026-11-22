@@ -1,4 +1,5 @@
 <?php
+// -shaine: Defines the barangay records referenced by beneficiaries.
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,6 +10,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+    // -shaine: Creates the table used to store barangay names.
     public function up(): void
     {
         Schema::create('barangays', function (Blueprint $table) {
@@ -21,6 +23,7 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
+    // -shaine: Removes the barangay table when rolling back.
     public function down(): void
     {
         Schema::dropIfExists('barangays');

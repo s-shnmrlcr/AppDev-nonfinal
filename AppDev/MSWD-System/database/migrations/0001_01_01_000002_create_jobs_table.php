@@ -1,4 +1,5 @@
 <?php
+// -shaine: Defines the queue jobs, batches, and failed job tables.
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,6 +10,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+    // -shaine: Creates queued-job, batch, and failed-job storage.
     public function up(): void
     {
         Schema::create('jobs', function (Blueprint $table) {
@@ -48,6 +50,7 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
+    // -shaine: Removes queue tables when rolling back.
     public function down(): void
     {
         Schema::dropIfExists('jobs');

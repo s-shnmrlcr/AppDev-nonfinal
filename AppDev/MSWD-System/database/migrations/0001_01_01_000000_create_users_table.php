@@ -1,4 +1,5 @@
 <?php
+// -shaine: Defines the staff user and password reset tables.
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,6 +10,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+    // -shaine: Creates user accounts, password reset tokens, and sessions.
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
@@ -40,6 +42,7 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
+    // -shaine: Removes the user authentication tables when rolling back.
     public function down(): void
     {
         Schema::dropIfExists('users');

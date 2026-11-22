@@ -1,3 +1,4 @@
+{{-- -shaine: Assigns verified beneficiaries to a program and shows assignment history. --}}
 @extends('layouts.app')
 
 @section('title', 'Manage Beneficiaries | MSWDO Kabacan')

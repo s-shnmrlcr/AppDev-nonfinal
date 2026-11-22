@@ -1,3 +1,4 @@
+{{-- -shaine: Displays a consistent badge for verification and payout statuses. --}}
 @props(['status'])
 
 @php

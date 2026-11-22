@@ -1,3 +1,4 @@
+{{-- -shaine: Displays organization settings and payout control rules. --}}
 @extends('layouts.app')
 @section('title', 'Settings | MSWDO Kabacan')
 @section('page-title', 'Settings')

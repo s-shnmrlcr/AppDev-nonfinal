@@ -1,4 +1,5 @@
 <?php
+// -shaine: Configures background job connections and retry behavior.
 
 return [
 

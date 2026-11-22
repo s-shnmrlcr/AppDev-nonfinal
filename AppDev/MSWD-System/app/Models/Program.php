@@ -1,4 +1,5 @@
 <?php
+// -shaine: Represents an assistance program and its payout assignments.
 
 namespace App\Models;
 
@@ -20,6 +21,7 @@ class Program extends Model
         'status',
     ];
 
+    // -shaine: Casts monetary budget and program dates to consistent model types.
     protected function casts(): array
     {
         return [
@@ -29,6 +31,7 @@ class Program extends Model
         ];
     }
 
+    // -shaine: Defines every beneficiary payout assigned to this program.
     public function payouts(): HasMany
     {
         return $this->hasMany(Payout::class);

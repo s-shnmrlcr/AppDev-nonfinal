@@ -1,4 +1,5 @@
 <?php
+// -shaine: Covers application page access and live dashboard behavior.
 
 namespace Tests\Feature;
 
@@ -19,9 +20,7 @@ class ExampleTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * A basic test example.
-     */
+    /** -shaine: Confirms the public root directs visitors to sign-in. */
     public function test_the_homepage_redirects_to_the_login_page(): void
     {
         $response = $this->get('/');
@@ -29,6 +28,7 @@ class ExampleTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
+    /** -shaine: Confirms the branded login form renders without registration links. */
     public function test_the_login_page_renders(): void
     {
         $this->get(route('login'))
@@ -44,6 +44,7 @@ class ExampleTest extends TestCase
             ->assertDontSee('Create account');
     }
 
+    /** -shaine: Ensures account registration routes are unavailable. */
     public function test_account_registration_is_disabled(): void
     {
         $this->get('/register')->assertNotFound();
@@ -52,12 +53,14 @@ class ExampleTest extends TestCase
         $this->assertDatabaseCount('users', 0);
     }
 
+    /** -shaine: Ensures guests cannot open authenticated workspace pages. */
     public function test_protected_pages_redirect_guests_to_login(): void
     {
         $this->get(route('dashboard'))
             ->assertRedirect(route('login'));
     }
 
+    /** -shaine: Confirms the authorized admin can sign in and open the dashboard. */
     public function test_admin_can_sign_in_and_view_the_dashboard(): void
     {
         User::factory()->create([
@@ -77,6 +80,7 @@ class ExampleTest extends TestCase
             ->assertSee('Dashboard');
     }
 
+    /** -shaine: Verifies dashboard metrics come from records and hide staff names. */
     public function test_dashboard_charts_and_recent_activity_use_live_records_without_staff_names(): void
     {
         $user = User::factory()->create();
@@ -126,6 +130,7 @@ class ExampleTest extends TestCase
             ->assertDontSee('Private Staff Name');
     }
 
+    /** -shaine: Confirms signing out clears the authenticated session. */
     public function test_staff_can_sign_out(): void
     {
         $this->actingAs(User::factory()->create())
@@ -135,6 +140,7 @@ class ExampleTest extends TestCase
         $this->assertGuest();
     }
 
+    /** -shaine: Prevents empty beneficiary and verification pages from showing fixtures. */
     public function test_pages_without_persisted_beneficiary_records_do_not_show_fixtures(): void
     {
         $this->actingAs(User::factory()->create())
@@ -150,6 +156,7 @@ class ExampleTest extends TestCase
             ->assertSee('Live claimant');
     }
 
+    /** -shaine: Checks identity-review controls and staff attribution are presented. */
     public function test_claimant_identity_check_requires_camera_capture_and_local_id_review(): void
     {
         $this->actingAs(User::factory()->create())
@@ -163,6 +170,7 @@ class ExampleTest extends TestCase
             ->assertSee('No facial recognition');
     }
 
+    /** -shaine: Verifies identity decisions and staff attribution are recorded privately. */
     public function test_staff_identity_decision_is_saved_to_audit_log(): void
     {
         $this->assertFalse(Schema::hasColumn('identity_verification_logs', 'claim_reference'));
@@ -229,6 +237,7 @@ class ExampleTest extends TestCase
             ->assertSee('Maria Santos');
     }
 
+    /** -shaine: Rejects unsupported identity decisions before creating audit records. */
     public function test_identity_decision_must_be_valid_before_it_is_logged(): void
     {
         $this->actingAs(User::factory()->create())
@@ -243,6 +252,7 @@ class ExampleTest extends TestCase
         $this->assertDatabaseCount('identity_verification_logs', 0);
     }
 
+    /** -shaine: Requires a staff name before an identity review is recorded. */
     public function test_identity_review_requires_staff_name(): void
     {
         $this->actingAs(User::factory()->create())
@@ -255,6 +265,7 @@ class ExampleTest extends TestCase
         $this->assertDatabaseCount('transaction_logs', 0);
     }
 
+    /** -shaine: Tests beneficiary creation, staff attribution, details, and CSV export. */
     public function test_beneficiary_can_be_created_and_exported(): void
     {
         $barangayId = DB::table('barangays')->insertGetId([
@@ -310,6 +321,7 @@ class ExampleTest extends TestCase
         $this->assertStringContainsString('Jamie,,Rivera', $response->streamedContent());
     }
 
+    /** -shaine: Tests a valid beneficiary CSV import and its audit attribution. */
     public function test_beneficiary_csv_import_is_validated_and_persisted(): void
     {
         DB::table('barangays')->insert([
@@ -347,6 +359,7 @@ class ExampleTest extends TestCase
         ]);
     }
 
+    /** -shaine: Ensures an invalid CSV cannot partially create beneficiary records. */
     public function test_invalid_beneficiary_csv_does_not_partially_import_records(): void
     {
         DB::table('barangays')->insert([
@@ -367,6 +380,7 @@ class ExampleTest extends TestCase
         $this->assertDatabaseCount('beneficiaries', 0);
     }
 
+    /** -shaine: Confirms current program fields and creator attribution are persisted. */
     public function test_a_program_can_be_created_with_the_current_program_fields(): void
     {
         $this->actingAs(User::factory()->create())
@@ -395,6 +409,7 @@ class ExampleTest extends TestCase
         ]);
     }
 
+    /** -shaine: Ensures program creation cannot omit staff attribution. */
     public function test_program_creation_requires_staff_name(): void
     {
         $this->actingAs(User::factory()->create())
@@ -411,6 +426,7 @@ class ExampleTest extends TestCase
         $this->assertDatabaseCount('transaction_logs', 0);
     }
 
+    /** -shaine: Confirms edits and deletes use the signed-in account without form staff fields. */
     public function test_program_update_and_delete_do_not_request_staff_name(): void
     {
         $program = Program::create([
@@ -450,6 +466,7 @@ class ExampleTest extends TestCase
         ]);
     }
 
+    /** -shaine: Verifies each beneficiary assignment records the assigning staff member. */
     public function test_program_beneficiary_assignment_records_staff_name_per_payout(): void
     {
         $barangayId = DB::table('barangays')->insertGetId([
@@ -534,6 +551,7 @@ class ExampleTest extends TestCase
             ->assertSee($user->name);
     }
 
+    /** -shaine: Verifies payout releases require and persist the releasing staff name. */
     public function test_payout_release_requires_and_records_staff_name(): void
     {
         $barangayId = DB::table('barangays')->insertGetId([
@@ -602,6 +620,7 @@ class ExampleTest extends TestCase
             ->assertSee('Maria Santos');
     }
 
+    /** -shaine: Covers program listings and CSV exports for programs and releases. */
     public function test_programs_can_be_created_and_payout_releases_export_csv(): void
     {
         $this->actingAs(User::factory()->create())
@@ -652,6 +671,7 @@ class ExampleTest extends TestCase
         $this->assertStringContainsString('PAY-TEST-001,"Jamie Rivera","Test Barangay","Community Support",2500.00,Released', $csv);
     }
 
+    /** -shaine: Ensures unsupported record-detail URLs return not found. */
     public function test_unknown_detail_routes_return_not_found(): void
     {
         $this->actingAs(User::factory()->create())
@@ -667,6 +687,7 @@ class ExampleTest extends TestCase
             ->assertNotFound();
     }
 
+    /** -shaine: Prevents payout pages from rendering records that were never saved. */
     public function test_payout_page_does_not_display_unpersisted_records(): void
     {
         $this->actingAs(User::factory()->create())
@@ -676,6 +697,7 @@ class ExampleTest extends TestCase
             ->assertDontSee('PAY-2026');
     }
 
+    /** -shaine: Smoke-tests that all protected staff pages render successfully. */
     public function test_all_protected_pages_render_for_authenticated_staff(): void
     {
         $routes = [

@@ -1,3 +1,4 @@
+{{-- -shaine: Displays the branded staff sign-in page and authentication form. --}}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -99,6 +100,7 @@
     </main>
 
     <script>
+        // -shaine: Toggles password visibility without changing the submitted value.
         document.getElementById('togglePassword')?.addEventListener('click', function() {
             const input = document.getElementById('password');
             const hidden = input.type === 'password';

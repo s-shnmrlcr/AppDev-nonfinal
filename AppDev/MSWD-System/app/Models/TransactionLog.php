@@ -1,4 +1,5 @@
 <?php
+// -shaine: Represents staff-attributed transaction audit entries.
 
 namespace App\Models;
 
@@ -17,6 +18,7 @@ class TransactionLog extends Model
         'details',
     ];
 
+    // -shaine: Creates an audit entry with the actor, action, and affected record.
     public static function record(
         string $staffName,
         string $action,
@@ -34,6 +36,7 @@ class TransactionLog extends Model
         ]);
     }
 
+    // -shaine: Defines the signed-in user associated with the audit entry.
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

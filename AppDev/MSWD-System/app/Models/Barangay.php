@@ -1,4 +1,5 @@
 <?php
+// -shaine: Represents a barangay and its beneficiary relationships.
 
 namespace App\Models;
 

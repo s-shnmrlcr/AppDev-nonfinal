@@ -1,3 +1,4 @@
+{{-- -shaine: Shows beneficiary details, verification documents, and review controls. --}}
 @extends('layouts.app')
 @section('title', 'Beneficiary Details | MSWDO Kabacan')
 @section('page-title', 'Beneficiary Details')
@@ -242,12 +243,14 @@
                 </div>
             </form>
 
-            {{-- Make remarks required in the browser for correction/rejection decisions. --}}
+            {{-- -shaine: Mirrors server-side remarks rules in browser form validation. --}}
             <script>
+                // -shaine: Sets up conditional review remarks validation once the page loads.
                 document.addEventListener('DOMContentLoaded', function () {
                     const decision = document.getElementById('verification_status');
                     const remarks = document.getElementById('remarks');
 
+                    // -shaine: Requires an explanation only for correction or rejection decisions.
                     function updateRemarksRequirement() {
                         const requiresRemarks = [
                             'Needs Correction',

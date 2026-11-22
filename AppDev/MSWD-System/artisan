@@ -1,5 +1,6 @@
 #!/usr/bin/env php
 <?php
+// -shaine: Starts Laravel's command-line application.
 
 use Illuminate\Foundation\Application;
 use Symfony\Component\Console\Input\ArgvInput;

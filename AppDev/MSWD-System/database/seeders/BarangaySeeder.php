@@ -1,4 +1,5 @@
 <?php
+// -shaine: Seeds the standard barangay records used by the portal.
 
 namespace Database\Seeders;
 
@@ -8,9 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class BarangaySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    /** -shaine: Inserts or updates the official barangay list without duplicates. */
     public function run(): void
     {
         $barangays = [

@@ -1,4 +1,5 @@
 <?php
+// -shaine: Configures mail transports and message defaults.
 
 return [
 

@@ -1,3 +1,4 @@
+// -shaine: Configures Vite inputs and Laravel asset hot reloading.
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import tailwindcss from '@tailwindcss/vite';

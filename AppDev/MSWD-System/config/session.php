@@ -1,4 +1,5 @@
 <?php
+// -shaine: Configures staff session storage, lifetime, and cookie behavior.
 
 use Illuminate\Support\Str;
 

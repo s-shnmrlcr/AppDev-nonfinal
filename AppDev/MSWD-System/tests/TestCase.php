@@ -1,4 +1,5 @@
 <?php
+// -shaine: Provides the shared Laravel test application setup.
 
 namespace Tests;
 

@@ -1,4 +1,5 @@
 <?php
+// -shaine: Defines beneficiary identity, address, and verification fields.
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,6 +10,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+    // -shaine: Creates beneficiary identity, address, and verification columns.
     public function up(): void
     {
         Schema::create('beneficiaries', function (Blueprint $table) {
@@ -45,6 +47,7 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
+    // -shaine: Removes the beneficiary table when rolling back.
     public function down(): void
     {
         Schema::dropIfExists('beneficiaries');

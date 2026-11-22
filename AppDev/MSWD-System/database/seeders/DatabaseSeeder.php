@@ -1,4 +1,5 @@
 <?php
+// -shaine: Coordinates the application's initial database seeding.
 
 namespace Database\Seeders;
 
@@ -11,9 +12,7 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
+    /** -shaine: Creates or repairs the default admin and seeds barangay records. */
     public function run(): void
     {
         $adminEmail = strtolower(trim((string) config('mswd.admin_email', 'mswdo.kabacan@gmail.com')));

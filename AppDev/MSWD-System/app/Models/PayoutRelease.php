@@ -1,4 +1,5 @@
 <?php
+// -shaine: Represents a recorded payment release for a payout.
 
 namespace App\Models;
 
@@ -16,6 +17,7 @@ class PayoutRelease extends Model
         'status',
     ];
 
+    // -shaine: Casts release amounts and release timestamps to usable PHP types.
     protected function casts(): array
     {
         return [
@@ -24,11 +26,13 @@ class PayoutRelease extends Model
         ];
     }
 
+    // -shaine: Defines the payout record this release belongs to.
     public function payout(): BelongsTo
     {
         return $this->belongsTo(Payout::class);
     }
 
+    // -shaine: Defines the account associated with the release record.
     public function releasedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'released_by');

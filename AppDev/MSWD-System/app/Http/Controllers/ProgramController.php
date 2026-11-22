@@ -1,4 +1,5 @@
 <?php
+// -shaine: Manages assistance programs and beneficiary assignments.
 
 namespace App\Http\Controllers;
 
@@ -15,6 +16,7 @@ use Illuminate\Support\Str;
 
 class ProgramController extends Controller
 {
+    // -shaine: Returns payout programs formatted for the program list.
     public function index()
     {
         $programs = Program::query()->orderByDesc('created_at')->get()
@@ -32,16 +34,19 @@ class ProgramController extends Controller
         return view('programs.index', compact('programs'));
     }
 
+    // -shaine: Opens a blank form for creating a payout program.
     public function create()
     {
         return view('programs.create');
     }
 
+    // -shaine: Opens the shared program form with the selected record.
     public function edit(Program $program)
     {
         return view('programs.create', compact('program'));
     }
 
+    // -shaine: Validates and records a new program with staff attribution.
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -57,11 +62,13 @@ class ProgramController extends Controller
         $staffName = $validated['staff_name'];
         unset($validated['staff_name']);
 
+        // -shaine: Detect required legacy columns so older program schemas still accept current form data.
         $requiredColumns = collect(Schema::getColumns('programs'))
             ->filter(fn (array $column) => ! $column['nullable'] && $column['default'] === null)
             ->pluck('name')
             ->all();
 
+        // -shaine: Map current form values to legacy columns only when the schema requires them.
         $legacyValues = [
             'name' => $validated['program_name'],
             'type' => 'Assistance',
@@ -94,6 +101,7 @@ class ProgramController extends Controller
             ->with('status', 'Payout program created.');
     }
 
+    // -shaine: Updates program fields and records the responsible staff account.
     public function update(Request $request, Program $program): RedirectResponse
     {
         $validated = $request->validate([
@@ -110,6 +118,7 @@ class ProgramController extends Controller
             'status' => ['required', 'in:Draft,Active'],
         ]);
 
+        // -shaine: Keep program changes and their audit record in one database transaction.
         DB::transaction(function () use ($request, $program, $validated): void {
             $program->update($validated);
 
@@ -127,6 +136,7 @@ class ProgramController extends Controller
             ->with('status', 'Payout program updated.');
     }
 
+    // -shaine: Deletes only unassigned programs and records the action.
     public function destroy(Request $request, Program $program): RedirectResponse
     {
         if ($program->payouts()->exists()) {
@@ -137,6 +147,7 @@ class ProgramController extends Controller
                 ]);
         }
 
+        // -shaine: Keep program deletion and its audit event atomic.
         DB::transaction(function () use ($request, $program): void {
             $name = $program->program_name;
             $id = $program->id;
@@ -156,7 +167,7 @@ class ProgramController extends Controller
             ->with('status', 'Payout program deleted.');
     }
 
-    // Display verified beneficiaries who can be assigned to this program
+    // -shaine: Shows available verified beneficiaries and assignment/release staff history.
     public function manageBeneficiaries(Program $program)
     {
         // Get beneficiaries already assigned to this program
@@ -211,7 +222,7 @@ class ProgramController extends Controller
     }
 
 
-    // Assign selected beneficiaries to the program
+    // -shaine: Validates eligibility, duplicate assignments, and budget before creating payouts.
     public function assignBeneficiaries(Request $request, Program $program)
     {
         // Validate the fixed assistance amount and selected beneficiaries
@@ -258,7 +269,7 @@ class ProgramController extends Controller
             ])->withInput();
         }
 
-        // Create all payout records together
+        // -shaine: Keep payout rows and their audit records all-or-nothing.
         DB::transaction(function () use ($program, $beneficiaryIds, $amount, $staffName) {
 
             foreach ($beneficiaryIds as $beneficiaryId) {

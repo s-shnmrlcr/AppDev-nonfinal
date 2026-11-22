@@ -1,4 +1,5 @@
 <?php
+// -shaine: Defines household and income data for beneficiary family heads.
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,6 +10,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+    // -shaine: Creates household and economic detail storage for family heads.
     public function up(): void
     {
         Schema::create('family_heads', function (Blueprint $table) {
@@ -37,6 +39,7 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
+    // -shaine: Removes family-head details when rolling back.
     public function down(): void
     {
         Schema::dropIfExists('family_heads');

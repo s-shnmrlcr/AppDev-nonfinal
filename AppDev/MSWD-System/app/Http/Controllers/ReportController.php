@@ -1,4 +1,5 @@
 <?php
+// -shaine: Produces assistance reports and downloadable exports.
 
 namespace App\Http\Controllers;
 
@@ -9,6 +10,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
+    // -shaine: Aggregates beneficiary and payout totals for the reports page.
     public function index()
     {
         $beneficiaryCount = Beneficiary::count();
@@ -44,6 +46,7 @@ class ReportController extends Controller
         ));
     }
 
+    // -shaine: Streams barangay summary counts and release rates as a CSV.
     public function export(): StreamedResponse
     {
         $barangays = DB::table('barangays')->orderBy('name')->get();
@@ -63,6 +66,7 @@ class ReportController extends Controller
             ->groupBy('beneficiaries.barangay_id')
             ->pluck('total', 'barangay_id');
 
+        // -shaine: Streams computed summary rows without constructing the full file in memory.
         return response()->streamDownload(function () use ($barangays, $beneficiaryCounts, $verifiedCounts, $releasedCounts): void {
             $output = fopen('php://output', 'w');
 
@@ -93,6 +97,7 @@ class ReportController extends Controller
         }, 'report-masterlist.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
+    // -shaine: Prevents spreadsheet formula execution from exported text values.
     private function safeCsvValue(mixed $value): mixed
     {
         if (! is_string($value) || preg_match('/^[\s]*[=+\-@]/', $value) !== 1) {

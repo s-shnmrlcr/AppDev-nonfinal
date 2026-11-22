@@ -1,3 +1,4 @@
+{{-- -shaine: Shows saved identity-check images and their review record. --}}
 @extends('layouts.app')
 @section('title', 'Identity Review | MSWDO Kabacan')
 @section('page-title', 'Identity Review')

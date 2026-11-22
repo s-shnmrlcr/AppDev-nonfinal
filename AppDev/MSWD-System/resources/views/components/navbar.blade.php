@@ -1,3 +1,4 @@
+{{-- -shaine: Renders the shared page title, breadcrumb, and staff menu. --}}
 <header class="topbar">
     <div class="topbar-left">
         <button class="icon-button mobile-menu" id="mobileMenu" aria-label="Open navigation">

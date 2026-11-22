@@ -1,4 +1,5 @@
 <?php
+// -shaine: Lists and exports beneficiary payout records.
 
 namespace App\Http\Controllers;
 
@@ -9,7 +10,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PayoutController extends Controller
 {
-    // Display payout records with an optional program filter
+    // -shaine: Lists payouts with their related beneficiary and program information.
     public function index(Request $request)
     {
         // Validate the selected program ID
@@ -39,7 +40,7 @@ class PayoutController extends Controller
         return view('payouts.index', compact('payouts', 'programs'));
     }
 
-    // Export payout records, respecting the selected program filter
+    // -shaine: Streams a spreadsheet-safe payout CSV honoring the program filter.
     public function export(Request $request): StreamedResponse
     {
         // Validate the selected program ID
@@ -56,6 +57,7 @@ class PayoutController extends Controller
             ->orderBy('created_at')
             ->get();
 
+        // -shaine: Streams rows directly instead of retaining a generated CSV in memory.
         return response()->streamDownload(function () use ($payouts): void {
             $output = fopen('php://output', 'w');
 
@@ -88,7 +90,7 @@ class PayoutController extends Controller
         ]);
     }
 
-    // Protect exported CSV values from spreadsheet formula injection
+    // -shaine: Prefixes dangerous leading spreadsheet operators with a text marker.
     private function safeCsvValue(mixed $value): mixed
     {
         if (! is_string($value) || preg_match('/^[\s]*[=+\-@]/', $value) !== 1) {

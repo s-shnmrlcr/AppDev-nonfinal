@@ -1,3 +1,4 @@
+{{-- -shaine: Presents audit records with review and cleanup actions. --}}
 @extends('layouts.app')
 @section('title', 'Audit Logs | MSWDO Kabacan')
 @section('page-title', 'Audit Logs')

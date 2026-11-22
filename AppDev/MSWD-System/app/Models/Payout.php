@@ -1,4 +1,5 @@
 <?php
+// -shaine: Represents an assigned beneficiary payout under a program.
 
 namespace App\Models;
 
@@ -18,6 +19,7 @@ class Payout extends Model
         'released_at',
     ];
 
+    // -shaine: Casts payout amounts and release timestamps for reliable comparisons.
     protected function casts(): array
     {
         return [
@@ -26,16 +28,19 @@ class Payout extends Model
         ];
     }
 
+    // -shaine: Defines the beneficiary receiving this payout.
     public function beneficiary(): BelongsTo
     {
         return $this->belongsTo(Beneficiary::class);
     }
 
+    // -shaine: Defines the assistance program funding this payout.
     public function program(): BelongsTo
     {
         return $this->belongsTo(Program::class);
     }
 
+    // -shaine: Defines the partial or complete releases made against this payout.
     public function releases(): HasMany
     {
         return $this->hasMany(PayoutRelease::class);

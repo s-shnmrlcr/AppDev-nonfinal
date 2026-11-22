@@ -1,4 +1,5 @@
 <?php
+// -shaine: Configures the cache stores and key prefix used by Laravel.
 
 use Illuminate\Support\Str;
 

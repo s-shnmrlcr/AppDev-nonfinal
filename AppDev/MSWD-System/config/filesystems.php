@@ -1,4 +1,5 @@
 <?php
+// -shaine: Configures storage disks and public file access.
 
 return [
 

@@ -1,4 +1,5 @@
 <?php
+// -shaine: Defines beneficiary assignments and their program payout records.
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,6 +10,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+    // -shaine: Creates payout assignments linking beneficiaries to programs.
     public function up(): void
     {
         Schema::create('payouts', function (Blueprint $table) {
@@ -32,6 +34,7 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
+    // -shaine: Removes payout assignments when rolling back.
     public function down(): void
     {
         Schema::dropIfExists('payouts');

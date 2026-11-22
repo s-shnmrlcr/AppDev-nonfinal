@@ -1,4 +1,5 @@
 <?php
+// -shaine: Configures application log channels and reporting levels.
 
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;

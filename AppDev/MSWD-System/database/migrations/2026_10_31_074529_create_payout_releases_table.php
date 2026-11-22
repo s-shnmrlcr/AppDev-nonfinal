@@ -1,4 +1,5 @@
 <?php
+// -shaine: Defines individual payout release records and amounts.
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,6 +10,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+    // -shaine: Creates records for partial and completed payout releases.
     public function up(): void
     {
         Schema::create('payout_releases', function (Blueprint $table) {
@@ -31,6 +33,7 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
+    // -shaine: Removes payout release history when rolling back.
     public function down(): void
     {
         Schema::dropIfExists('payout_releases');

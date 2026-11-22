@@ -1,3 +1,4 @@
+{{-- -shaine: Guides staff through claimant identity capture and verification. --}}
 @extends('layouts.app')
 @section('title', 'Claimant Identity Check | MSWDO Kabacan')
 @section('page-title', 'Claimant Identity Check')

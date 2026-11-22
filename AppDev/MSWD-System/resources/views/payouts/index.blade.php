@@ -1,3 +1,4 @@
+{{-- -shaine: Lists assigned payouts and their release statuses. --}}
 @extends('layouts.app')
 @section('title', 'Payout Releases | MSWDO Kabacan')
 @section('page-title', 'Payout Releases')
@@ -94,17 +95,18 @@
 
     @push('scripts')
     <script>
-        // Listen for changes in the search field and dropdown filters
+        // -shaine: Reapplies payout filters whenever the search or dropdowns change.
         document.getElementById('tableSearch')?.addEventListener('input', filterPayouts);
         document.getElementById('programFilter')?.addEventListener('change', filterPayouts);
         document.getElementById('statusFilter')?.addEventListener('change', filterPayouts);
 
+        // -shaine: Shows payout rows matching the search, selected program, and status.
         function filterPayouts() {
             const query = document.getElementById('tableSearch').value.toLowerCase();
             const program = document.getElementById('programFilter').value;
             const status = document.getElementById('statusFilter').value;
 
-            // Combine all selected filters
+            // -shaine: Requires a row to match every active filter before it stays visible.
             document.querySelectorAll('#payoutTable tbody tr[data-payout]').forEach(row => {
 
                 const matches =

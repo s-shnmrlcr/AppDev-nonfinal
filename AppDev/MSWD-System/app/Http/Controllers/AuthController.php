@@ -1,4 +1,5 @@
 <?php
+// -shaine: Handles staff sign-in, session renewal, and sign-out.
 
 namespace App\Http\Controllers;
 
@@ -9,13 +10,16 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    // -shaine: Displays the staff sign-in form.
     public function showLogin()
     {
         return view('auth.login');
     }
 
+    // -shaine: Authenticates the approved admin account and rotates its session ID.
     public function login(Request $request): RedirectResponse
     {
+        // -shaine: Normalize casing and surrounding spaces before checking the authorized account.
         $request->merge([
             'email' => strtolower(trim((string) $request->input('email'))),
         ]);
@@ -57,6 +61,7 @@ class AuthController extends Controller
         return redirect()->route('dashboard');
     }
 
+    // -shaine: Clears the authentication session and redirects staff to sign-in.
     public function logout(Request $request): RedirectResponse
     {
         Auth::logout();

@@ -1,3 +1,4 @@
+{{-- -shaine: Provides the create and edit form for assistance programs. --}}
 @extends('layouts.app')
 @php($isEditing = isset($program))
 @section('title', ($isEditing ? 'Edit' : 'Create').' Program | MSWDO Kabacan')

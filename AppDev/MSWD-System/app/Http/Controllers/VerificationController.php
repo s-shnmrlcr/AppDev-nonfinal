@@ -1,4 +1,5 @@
 <?php
+// -shaine: Records identity checks and serves their protected review images.
 
 namespace App\Http\Controllers;
 
@@ -12,6 +13,7 @@ use RuntimeException;
 
 class VerificationController extends Controller
 {
+    // -shaine: Lists registered applicants for an in-person identity review.
     public function index()
     {
         $beneficiaries = Beneficiary::query()
@@ -22,6 +24,7 @@ class VerificationController extends Controller
         return view('verification.index', compact('beneficiaries'));
     }
 
+    // -shaine: Validates review inputs, saves protected images, and records the decision.
     public function review(Request $request): RedirectResponse
     {
         // Duha ra ka desisyon ang dawaton kay audit record kini sa manual nga visual review. -shaine
@@ -46,7 +49,9 @@ class VerificationController extends Controller
             throw new RuntimeException('The selected ID image could not be stored.');
         }
 
+        // -shaine: Store images before the database transaction so failures can clean up both files.
         try {
+            // -shaine: Save the review record and its audit entry as one atomic operation.
             DB::transaction(function () use (
                 $request,
                 $beneficiary,
@@ -84,6 +89,7 @@ class VerificationController extends Controller
             ->with('status', 'Identity review recorded in the audit log.');
     }
 
+    // -shaine: Loads a saved identity review and its transaction staff name.
     public function showReview(int $log)
     {
         $review = DB::table('identity_verification_logs')
@@ -100,18 +106,22 @@ class VerificationController extends Controller
         return view('verification.review', compact('review', 'staffName'));
     }
 
+    // -shaine: Streams the captured claimant photo after access and path checks.
     public function capturePhoto(int $log)
     {
         return $this->reviewImage($log, 'captured_photo_path');
     }
 
+    // -shaine: Streams the selected ID image after access and path checks.
     public function idImage(int $log)
     {
         return $this->reviewImage($log, 'id_image_path');
     }
 
+    // -shaine: Serves only approved image columns stored in the private review folder.
     private function reviewImage(int $log, string $column)
     {
+        // -shaine: Whitelist column names so request input cannot select arbitrary database fields.
         abort_unless(in_array($column, ['captured_photo_path', 'id_image_path'], true), 404);
 
         $path = DB::table('identity_verification_logs')

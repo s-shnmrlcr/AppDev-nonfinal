@@ -1,3 +1,4 @@
+// -shaine: Handles claimant photo capture and on-device identity comparison.
 import * as faceapi from '@vladmandic/face-api';
 
 const check = document.getElementById('identityCheck');
@@ -33,8 +34,10 @@ if (check) {
     let comparing = false;
     let capturedPhotoReady = false;
 
+    // -shaine: Enables review decisions only after all required inputs are ready.
     function updateReviewAvailability() {
         const ready = captured && capturedPhotoReady && selectedId && beneficiarySelect.value !== '' && !comparing;
+        // -shaine: Applies the same readiness state to both decision buttons.
         reviewButtons.forEach(button => {
             button.disabled = !ready;
         });
@@ -50,14 +53,18 @@ if (check) {
         }
     }
 
+    // -shaine: Stores the selected decision before the form is submitted.
     reviewButtons.forEach(button => {
+        // -shaine: Copies the activated submit button's decision into the hidden field.
         button.addEventListener('click', () => {
             reviewDecision.value = button.value;
         });
     });
 
+    // -shaine: Rechecks readiness whenever a different applicant is selected.
     beneficiarySelect.addEventListener('change', updateReviewAvailability);
 
+    // -shaine: Loads face models once and shares the pending load across comparisons.
     function loadModels() {
         if (!modelsPromise) {
             const modelPath = `${check.dataset.modelPath}/`;
@@ -71,6 +78,7 @@ if (check) {
         return modelsPromise;
     }
 
+    // -shaine: Returns a descriptor only when the image contains exactly one detectable face.
     async function describeSingleFace(image) {
         const faces = await faceapi
             .detectAllFaces(
@@ -83,11 +91,13 @@ if (check) {
         return faces.length === 1 ? faces[0].descriptor : null;
     }
 
+    // -shaine: Compares local face descriptors for advisory feedback, never a final decision.
     async function compareFaces() {
         if (!captured || !selectedId) {
             return;
         }
 
+        // -shaine: Tag this run so outdated async results cannot replace newer selections.
         const currentRun = ++comparisonRun;
         comparing = true;
         matchStatus.textContent = 'Loading the local face model and comparing both images…';
@@ -137,6 +147,7 @@ if (check) {
         }
     }
 
+    // -shaine: Requests camera permission and displays a live claimant preview.
     startCameraButton.addEventListener('click', async () => {
         if (!navigator.mediaDevices?.getUserMedia) {
             cameraStatus.textContent = 'Camera unavailable. Use a supported browser over HTTPS or localhost.';
@@ -168,6 +179,7 @@ if (check) {
         }
     });
 
+    // -shaine: Captures a still image, prepares its upload file, and starts comparison.
     captureButton.addEventListener('click', async () => {
         if (!cameraStream || !camera.videoWidth) {
             cameraStatus.textContent = 'Wait for the camera preview before capturing.';
@@ -189,7 +201,9 @@ if (check) {
         updateReviewAvailability();
 
         try {
+            // -shaine: Converts the canvas capture into a JPEG file for secure form upload.
             const photoBlob = await new Promise((resolve, reject) => {
+                // -shaine: Rejects the capture when the browser cannot encode the image.
                 captureCanvas.toBlob(blob => {
                     if (blob) {
                         resolve(blob);
@@ -211,6 +225,7 @@ if (check) {
             return;
         }
 
+        // -shaine: Releases the camera immediately after a usable still is captured.
         cameraStream.getTracks().forEach(track => track.stop());
         camera.srcObject = null;
         cameraStream = null;
@@ -223,6 +238,7 @@ if (check) {
         void compareFaces();
     });
 
+    // -shaine: Resets captured state and comparison results before a retake.
     retakeButton.addEventListener('click', () => {
         comparisonRun++;
         comparing = false;
@@ -241,6 +257,7 @@ if (check) {
         updateReviewAvailability();
     });
 
+    // -shaine: Validates and previews the selected ID image before enabling review.
     idInput.addEventListener('change', () => {
         comparisonRun++;
         comparing = false;
@@ -282,12 +299,14 @@ if (check) {
         const idFileTransfer = new DataTransfer();
         idFileTransfer.items.add(file);
         idImageUpload.files = idFileTransfer.files;
+        // -shaine: Marks the ID ready only after the browser successfully decodes it.
         idPreview.onload = () => {
             selectedId = true;
             idStatus.textContent = 'ID image ready. Comparison stays on this device; both images are saved only if you submit the review.';
             updateReviewAvailability();
             void compareFaces();
         };
+        // -shaine: Clears upload readiness when the selected image cannot be previewed.
         idPreview.onerror = () => {
             selectedId = false;
             idImageUpload.value = '';
@@ -299,6 +318,7 @@ if (check) {
         idPrompt.classList.add('hidden');
     });
 
+    // -shaine: Blocks submission until inputs and an allowed manual decision are ready.
     reviewForm.addEventListener('submit', event => {
         if (!beneficiarySelect.value || !captured || !capturedPhotoReady || !selectedId || comparing) {
             event.preventDefault();
@@ -316,6 +336,7 @@ if (check) {
         reviewDecision.value = decision;
     });
 
+    // -shaine: Releases camera and temporary image resources when leaving the page.
     window.addEventListener('pagehide', () => {
         cameraStream?.getTracks().forEach(track => track.stop());
         if (idImageUrl) {

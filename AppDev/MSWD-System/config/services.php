@@ -1,4 +1,5 @@
 <?php
+// -shaine: Stores credentials and settings for external service integrations.
 
 return [
 

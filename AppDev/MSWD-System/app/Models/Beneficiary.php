@@ -1,4 +1,5 @@
 <?php
+// -shaine: Represents beneficiary identity, eligibility, and review data.
 
 namespace App\Models;
 
@@ -26,7 +27,7 @@ class Beneficiary extends Model
         'review_remarks',
     ];
 
-    // gi change ko ang monthly income na field kay didto ko siya ibutang sa family heads table --shijme
+    // -shaine: Casts date and family-head database values to their PHP types.
     protected function casts(): array
     {
         return [
@@ -36,17 +37,19 @@ class Beneficiary extends Model
     }
 
 
+    // -shaine: Defines the barangay that owns this beneficiary record.
     public function barangay(): BelongsTo
     {
         return $this->belongsTo(Barangay::class);
     }
 
-    // mag check if ang beneficiary is also a family head --shijme
+    // -shaine: Defines the optional household details for this family head.
     public function familyHead(): HasOne
     {
         return $this->hasOne(FamilyHead::class);
     }
 
+    // -shaine: Joins non-empty name parts into the beneficiary's display name.
     public function getFullNameAttribute(): string
     {
         // I-filter ang wala sulod nga middle name o suffix aron walay sobra nga espasyo sa full name. -shaine

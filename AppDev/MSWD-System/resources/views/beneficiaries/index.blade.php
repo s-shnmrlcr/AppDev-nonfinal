@@ -1,3 +1,4 @@
+{{-- -shaine: Displays the beneficiary masterlist, filters, and import/export actions. --}}
 @extends('layouts.app')
 @section('title', 'Beneficiaries | MSWDO Kabacan')
 @section('page-title', 'Beneficiaries')
@@ -122,19 +123,22 @@
 
 @push('scripts')
     <script>
+        // -shaine: Reapplies the beneficiary filters as the search query changes.
         document.getElementById('tableSearch')?.addEventListener('input', function() {
             filterBeneficiaries();
         });
+        // -shaine: Updates visible rows when a filter selection changes.
         document.getElementById('barangayFilter')?.addEventListener('change', filterBeneficiaries);
         document.getElementById('sectorFilter')?.addEventListener('change', filterBeneficiaries);
         document.getElementById('verificationFilter')?.addEventListener('change', filterBeneficiaries);
 
+        // -shaine: Shows only rows matching the search text and all selected filters.
         function filterBeneficiaries() {
             const query = document.getElementById('tableSearch').value.toLowerCase();
             const barangay = document.getElementById('barangayFilter').value.toLowerCase();
             const sector = document.getElementById('sectorFilter').value;
             const verification = document.getElementById('verificationFilter').value;
-            // I-combine ang tanang filter aron kinahanglan motakdo ang beneficiary sa matag napiling criteria. -shaine
+            // -shaine: Hides a row unless every selected criterion matches that beneficiary.
             document.querySelectorAll('#beneficiaryTable tbody tr[data-beneficiary]').forEach(row => {
                 const matches = row.innerText.toLowerCase().includes(query)
                     && (!barangay || row.dataset.barangay.toLowerCase() === barangay)

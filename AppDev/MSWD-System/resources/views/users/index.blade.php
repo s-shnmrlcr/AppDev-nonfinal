@@ -1,3 +1,4 @@
+{{-- -shaine: Lists authorized staff accounts and their roles. --}}
 @extends('layouts.app')
 @section('title', 'User Management | MSWDO Kabacan')
 @section('page-title', 'User Management')

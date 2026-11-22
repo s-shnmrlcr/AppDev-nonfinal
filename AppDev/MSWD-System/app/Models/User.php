@@ -1,4 +1,5 @@
 <?php
+// -shaine: Represents an authenticated staff account.
 
 namespace App\Models;
 
@@ -40,6 +41,7 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
+    // -shaine: Ensures credentials and account-verification values use safe PHP types.
     protected function casts(): array
     {
         return [

@@ -1,4 +1,5 @@
 <?php
+// -shaine: Stores household and economic details for family heads.
 
 namespace App\Models;
 
@@ -20,6 +21,7 @@ class FamilyHead extends Model
         'employment_status',
     ];
 
+    // -shaine: Casts household counts and income values to numeric PHP types.
     protected function casts(): array
     {
         return [
@@ -27,6 +29,7 @@ class FamilyHead extends Model
         ];
     }
 
+    // -shaine: Defines the beneficiary whose household details these fields describe.
     public function beneficiary(): BelongsTo
     {
         return $this->belongsTo(Beneficiary::class);

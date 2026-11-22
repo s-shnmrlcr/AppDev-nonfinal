@@ -1,4 +1,5 @@
 <?php
+// -shaine: Boots the Laravel application for incoming web requests.
 
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;

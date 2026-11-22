@@ -1,4 +1,5 @@
 <?php
+// -shaine: Loads and manages the system audit log records.
 
 namespace App\Http\Controllers;
 
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 
 class AuditController extends Controller
 {
+    // -shaine: Loads identity review and transaction records for the audit table.
     public function index()
     {
         $logs = DB::table('identity_verification_logs')
@@ -36,6 +38,7 @@ class AuditController extends Controller
         return view('audit.index', compact('logs', 'transactionLogs'));
     }
 
+    // -shaine: Deletes an identity review and its private images without changing the beneficiary.
     public function destroy(Request $request, int $log): RedirectResponse
     {
         $review = DB::table('identity_verification_logs')
@@ -44,6 +47,7 @@ class AuditController extends Controller
 
         abort_if($review === null, 404);
 
+        // -shaine: Record the deletion audit event in the same transaction as the review removal.
         DB::transaction(function () use ($request, $review): void {
             DB::table('identity_verification_logs')
                 ->where('id', $review->id)

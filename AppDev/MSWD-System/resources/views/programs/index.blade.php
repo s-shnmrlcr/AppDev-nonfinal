@@ -1,3 +1,4 @@
+{{-- -shaine: Displays assistance program cards and their management actions. --}}
 @extends('layouts.app')
 @section('title', 'Payout Programs | MSWDO Kabacan')
 @section('page-title', 'Payout Programs')

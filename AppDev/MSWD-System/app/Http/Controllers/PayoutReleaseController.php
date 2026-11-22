@@ -1,4 +1,5 @@
 <?php
+// -shaine: Records payout releases and maintains their status history.
 
 namespace App\Http\Controllers;
 
@@ -12,7 +13,7 @@ use Illuminate\Support\Str;
 
 class PayoutReleaseController extends Controller
 {
-    // Display payout details and release history
+    // -shaine: Loads payout details, release totals, and the staff release history.
     public function index(Payout $payout)
     {
         $payout->load([
@@ -49,10 +50,10 @@ class PayoutReleaseController extends Controller
 
     }
 
-    // Record a new assistance release
+    // -shaine: Records a release without allowing concurrent requests to exceed the balance.
     public function store(Request $request, Payout $payout)
     {
-        // Validate the release amount
+        // -shaine: Require a staff attribution and a positive release amount.
         $validated = $request->validate([
             'staff_name' => ['required', 'string', 'max:255'],
             'amount' => [
@@ -62,6 +63,7 @@ class PayoutReleaseController extends Controller
             ],
         ]);
 
+        // -shaine: Lock, validate, and save the release in one transaction to prevent overpayment.
         DB::transaction(function () use ($payout, $validated) {
 
             // Lock the payout while checking its remaining balance

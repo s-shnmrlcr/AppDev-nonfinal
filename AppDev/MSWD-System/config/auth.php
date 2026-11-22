@@ -1,4 +1,5 @@
 <?php
+// -shaine: Configures staff authentication guards, providers, and password resets.
 
 use App\Models\User;
 

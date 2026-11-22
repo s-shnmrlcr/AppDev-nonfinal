@@ -1,4 +1,5 @@
 
+{{-- -shaine: Shows payout release details, entry form, and release history. --}}
 @extends('layouts.app')
 
 @section('title', 'Payout Releases | MSWDO Kabacan')
